@@ -4,33 +4,53 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
-// POST /api/auth/login
+// ✅ POST /api/auth/login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+
   try {
-    if (!email || !password) return res.status(400).json({ message: "Please provide email and password" });
+    // Validate input
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Please provide both email and password" });
+    }
 
+    // Check if user exists
     const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
+    // Verify password
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" });
+    // ✅ Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+    );
 
-    res.json({
+    // ✅ Send full user object with _id (not id)
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
       token,
       user: {
-        id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
-        avatar: user.avatar
-      }
+        avatar: user.avatar || null,
+      },
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ Login Error:", err.message);
+    res.status(500).json({ message: "Server error. Please try again later." });
   }
 });
 

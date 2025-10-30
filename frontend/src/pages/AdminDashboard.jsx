@@ -4,6 +4,8 @@ import Navbar from "../components/Navbar";
 import OverviewCards from "../components/OverviewCards";
 import RevenueChart from "../components/RevenueChart";
 import AnnouncementList from "../components/AnnouncementList";
+import AttendanceSummary from "../components/AttendanceSummary";
+import AdminAttendanceTable from "../components/AdminAttendanceTable";
 
 const AdminDashboard = () => {
   const stats = useState({ employees: 8, interns: 12, revenue: 35000 });
@@ -26,6 +28,8 @@ const AdminDashboard = () => {
         <Navbar user={user} />
         <OverviewCards stats={stats} />
         <RevenueChart />
+         <AdminAttendanceTable />
+        <AttendanceSummary />
         <AnnouncementList />
       </div>
     </div>
