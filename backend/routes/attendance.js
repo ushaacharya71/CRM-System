@@ -5,7 +5,7 @@ const router = express.Router();
 
 /**
  * ✅ POST /api/attendance/mark
- * Marks attendance events like checkIn, lunchOut, lunchIn, breakOut, breakIn, checkOut
+ * Marks attendance events like checkIn, lunchOut, lunchIn, breakOut, breakIn, checkOut and in this order same admin can also mark attendance for any user
  */
 router.post("/mark", async (req, res) => {
   try {

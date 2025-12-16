@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import api from "../utils/api";
 import UserTable from "../components/UserTable";
 import UserModal from "../components/UserModal";
@@ -71,11 +70,7 @@ const ManageUsers = () => {
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white shadow-md rounded-xl p-6"
-      >
+      <div className="bg-white shadow-md rounded-xl p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-700">Manage Users</h2>
           <button
@@ -91,7 +86,7 @@ const ManageUsers = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
-      </motion.div>
+      </div>
 
       {showModal && (
         <UserModal

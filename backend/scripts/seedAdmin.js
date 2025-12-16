@@ -1,5 +1,5 @@
 // =========================================
-// GLOW CRM SEED FILE
+// GLOWLOGICS CRM SEED FILE
 // Creates: Admin, Employee, Intern
 // =========================================
 import dotenv from "dotenv";

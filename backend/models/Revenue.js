@@ -1,68 +1,46 @@
-import express from "express";
-import Revenue from "../models/Revenue.js";
-import { protect } from "../middleware/auth.js";
-import { authorizeRoles } from "../middleware/role.js";
+// backend/models/Revenue.js
+import mongoose from "mongoose";
 
-const router = express.Router();
+const revenueSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
-/**
- * ✅ POST /api/revenue/add
- * Add new revenue entry (Admin or Employee)
- */
-router.post("/revenue/add", protect, authorizeRoles("admin", "employee"), async (req, res) => {
-  try {
-    const { userId, amount, date } = req.body;
+    // ⭐ NEW FIELD: Manager of this intern
+    manager: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null, // Manager can be null for Admin-created entries
+    },
 
-    if (!userId || !amount) {
-      return res.status(400).json({ message: "userId and amount are required" });
-    }
+    amount: {
+      type: Number,
+      required: true,
+    },
 
-    const entry = new Revenue({
-      user: userId,
-      amount,
-      date: date ? new Date(date) : new Date(),
-    });
+    // reason/type for revenue (salary, bonus, performance, etc.)
+    type: {
+      type: String,
+      enum: ["salary", "bonus", "deduction", "other"],
+      default: "salary",
+    },
 
-    await entry.save();
+    description: {
+      type: String,
+      default: "",
+    },
 
-    res.status(201).json({
-      success: true,
-      message: "Revenue entry added successfully",
-      entry,
-    });
-  } catch (err) {
-    console.error("❌ Error adding revenue:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { timestamps: true }
+);
 
-/**
- * ✅ GET /api/revenue/:userId
- * Get all revenue entries for a specific user
- */
-router.get("/revenue/:userId", protect, async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const entries = await Revenue.find({ user: userId }).sort({ date: -1 });
-    res.status(200).json(entries);
-  } catch (err) {
-    console.error("❌ Error fetching revenues:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
+const Revenue = mongoose.model("Revenue", revenueSchema);
 
-/**
- * ✅ GET /api/revenue
- * Admin only - list all revenue entries
- */
-router.get("/revenue", protect, authorizeRoles("admin"), async (req, res) => {
-  try {
-    const all = await Revenue.find().populate("user", "name email role");
-    res.status(200).json(all);
-  } catch (err) {
-    console.error("❌ Error fetching all revenue:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
-
-export default router;
+export default Revenue;
