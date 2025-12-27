@@ -1,15 +1,13 @@
-// backend/routes/salary.js
 import express from "express";
 import Salary from "../models/Salary.js";
-import Revenue from "../models/Revenue.js";
 import User from "../models/User.js";
 import { protect } from "../middleware/auth.js";
-
+import XLSX from "xlsx";
 const router = express.Router();
 
-/* =====================================================
-   ✅ SET / UPDATE SALARY OR STIPEND
-===================================================== */
+/* ===========================
+   SET / UPDATE SALARY
+=========================== */
 router.post("/set", protect, async (req, res) => {
   try {
     const { userId, baseSalary, bonus = 0, deductions = 0, month } = req.body;
@@ -23,7 +21,6 @@ router.post("/set", protect, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    /* 🔐 PERMISSION CHECK */
     if (req.user.role === "manager") {
       if (String(targetUser.manager) !== String(req.user._id)) {
         return res.status(403).json({
@@ -31,13 +28,12 @@ router.post("/set", protect, async (req, res) => {
         });
       }
     } else if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Unauthorized action" });
+      return res.status(403).json({ message: "Unauthorized" });
     }
 
     const totalSalary =
       Number(baseSalary) + Number(bonus) - Number(deductions);
 
-    /* 🔄 UPSERT SALARY RECORD */
     let record = await Salary.findOne({ user: userId, month });
 
     if (record) {
@@ -59,64 +55,6 @@ router.post("/set", protect, async (req, res) => {
       });
     }
 
-    /* 🔁 SYNC REVENUE (SALARY / STIPEND) */
-    await Revenue.findOneAndUpdate(
-      {
-        user: userId,
-        type: "salary",
-        description: `Salary for ${month}`,
-      },
-      {
-        user: userId,
-        amount: totalSalary,
-        type: "salary",
-        description: `Salary for ${month}`,
-        manager: req.user.role === "manager" ? req.user._id : null,
-        date: new Date(),
-      },
-      { upsert: true }
-    );
-
-    /* 🔁 BONUS REVENUE */
-    if (bonus > 0) {
-      await Revenue.findOneAndUpdate(
-        {
-          user: userId,
-          type: "bonus",
-          description: `Bonus for ${month}`,
-        },
-        {
-          user: userId,
-          amount: bonus,
-          type: "bonus",
-          description: `Bonus for ${month}`,
-          manager: req.user._id,
-          date: new Date(),
-        },
-        { upsert: true }
-      );
-    }
-
-    /* 🔁 DEDUCTION REVENUE */
-    if (deductions > 0) {
-      await Revenue.findOneAndUpdate(
-        {
-          user: userId,
-          type: "deduction",
-          description: `Deduction for ${month}`,
-        },
-        {
-          user: userId,
-          amount: -Math.abs(deductions),
-          type: "deduction",
-          description: `Deduction for ${month}`,
-          manager: req.user._id,
-          date: new Date(),
-        },
-        { upsert: true }
-      );
-    }
-
     res.json({
       success: true,
       message: "Salary / stipend updated successfully",
@@ -128,27 +66,73 @@ router.post("/set", protect, async (req, res) => {
   }
 });
 
-/* =====================================================
-   ✅ GET SALARY HISTORY (ROLE SAFE)
-===================================================== */
+/* ===========================
+   GET SALARY HISTORY
+=========================== */
 router.get("/:userId", protect, async (req, res) => {
   try {
-    const { userId } = req.params;
+    const records = await Salary.find({ user: req.params.userId }).sort({
+      month: -1,
+    });
+    res.json(records);
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
-    if (
-      req.user.role !== "admin" &&
-      req.user._id.toString() !== userId
-    ) {
-      const user = await User.findById(userId);
-      if (!user || user.manager?.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
+/* ===========================
+   MANAGER → EXPORT SALARY EXCEL
+=========================== */
+router.get("/manager/export", protect, async (req, res) => {
+  try {
+    if (req.user.role !== "manager") {
+      return res.status(403).json({ message: "Unauthorized" });
     }
 
-    const records = await Salary.find({ user: userId }).sort({ month: -1 });
-    res.json(records);
+    const interns = await User.find({ manager: req.user._id }).select(
+      "_id name email role"
+    );
+
+    const internIds = interns.map((i) => i._id);
+
+    const salaries = await Salary.find({ user: { $in: internIds } })
+      .populate("user", "name email role")
+      .sort({ month: -1 });
+
+    const rows = salaries.map((s) => ({
+      Name: s.user.name,
+      Email: s.user.email,
+      Role: s.user.role,
+      Month: s.month,
+      "Base Salary": s.baseSalary,
+      Bonus: s.bonus,
+      Deductions: s.deductions,
+      "Net Salary": s.totalSalary,
+      "Updated At": s.updatedAt.toLocaleString(),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Salaries");
+
+    const buffer = XLSX.write(workbook, {
+      type: "buffer",
+      bookType: "xlsx",
+    });
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=manager-salary-report.xlsx"
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    res.send(buffer);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Excel export error:", error);
+    res.status(500).json({ message: "Export failed" });
   }
 });
 

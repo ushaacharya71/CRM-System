@@ -23,6 +23,25 @@ const ManagerStipend = () => {
     }
   };
 
+  const downloadExcel = async () => {
+    try {
+      const res = await api.get("/salary/manager/export", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "manager-salary-report.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      alert("Failed to download Excel");
+      console.error(error);
+    }
+  };
+
   /* ------------------------------------
      INIT STIPEND STATE
   ------------------------------------ */
@@ -75,9 +94,7 @@ const ManagerStipend = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">
-        Intern Stipend Management
-      </h1>
+      <h1 className="text-2xl font-bold mb-4">Intern Stipend Management</h1>
 
       {/* MONTH SELECTOR */}
       <div className="mb-6">
@@ -172,9 +189,7 @@ const ManagerStipend = () => {
                       />
                     </td>
 
-                    <td className="p-3 font-semibold">
-                      ₹{net}
-                    </td>
+                    <td className="p-3 font-semibold">₹{net}</td>
 
                     <td className="p-3">
                       <button
@@ -190,6 +205,13 @@ const ManagerStipend = () => {
               })}
             </tbody>
           </table>
+          <br></br>
+          <button
+            onClick={downloadExcel}
+            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-xl mb-4"
+          >
+            Download Salary Excel
+          </button>
         </div>
       )}
     </div>
