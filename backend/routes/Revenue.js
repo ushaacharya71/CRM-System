@@ -1,4 +1,3 @@
-// backend/routes/revenue.js
 import express from "express";
 import Revenue from "../models/Revenue.js";
 import User from "../models/User.js";
@@ -12,13 +11,19 @@ const router = express.Router();
  * -----------------------------------
  * Admin   → anyone
  * Manager → assigned interns / employees
+ *
+ * RULE:
+ * - Frontend NEVER sends date
+ * - Backend ALWAYS uses today's normalized date
  */
 router.post("/add", protect, async (req, res) => {
   try {
-    const { userId, amount, date } = req.body;
+    const { userId, amount, description } = req.body;
 
     if (!userId || amount === undefined) {
-      return res.status(400).json({ message: "userId and amount are required" });
+      return res
+        .status(400)
+        .json({ message: "userId and amount are required" });
     }
 
     const targetUser = await User.findById(userId);
@@ -28,8 +33,12 @@ router.post("/add", protect, async (req, res) => {
 
     /* ================= ROLE CHECK ================= */
     if (req.user.role === "manager") {
-      if (targetUser.manager?.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: "Not your assigned user" });
+      if (
+        targetUser.manager?.toString() !== req.user._id.toString()
+      ) {
+        return res
+          .status(403)
+          .json({ message: "Not your assigned user" });
       }
     }
 
@@ -37,39 +46,51 @@ router.post("/add", protect, async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    /* ================= DATE NORMALIZATION ================= */
-    const revenueDate = date
-      ? new Date(new Date(date).setHours(0, 0, 0, 0))
-      : new Date(new Date().setHours(0, 0, 0, 0));
+    /* ================= TODAY (NORMALIZED) ================= */
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     /* ================= UPSERT DAILY REVENUE ================= */
     const entry = await Revenue.findOneAndUpdate(
       {
         user: userId,
-        date: revenueDate,
+        date: today,
       },
       {
         $set: {
           amount: Number(amount),
-          manager: req.user.role === "manager" ? req.user._id : null,
-          description: "Daily revenue update",
-          date: revenueDate,
+          manager:
+            req.user.role === "manager" ? req.user._id : null,
+          description: description || "Daily revenue update",
         },
       },
-      { new: true, upsert: true }
+      {
+        new: true,
+        upsert: true, // 🔥 create if not exists
+      }
     );
 
-    res.status(200).json({ success: true, entry });
+    res.status(200).json({
+      success: true,
+      message: "Revenue saved successfully",
+      entry,
+    });
   } catch (err) {
-    console.error("Revenue update error:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("❌ Revenue update error:", err);
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
   }
 });
 
 /**
  * -----------------------------------
- * 📌 GET USER REVENUE (DAILY)
+ * 📌 GET USER REVENUE (HISTORY)
  * -----------------------------------
+ * Admin   → anyone
+ * Manager → assigned users
+ * User    → self (optional later)
  */
 router.get("/:userId", protect, async (req, res) => {
   try {
@@ -82,8 +103,12 @@ router.get("/:userId", protect, async (req, res) => {
 
     /* ================= ACCESS RULES ================= */
     if (req.user.role === "manager") {
-      if (targetUser.manager?.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: "Not your assigned user" });
+      if (
+        targetUser.manager?.toString() !== req.user._id.toString()
+      ) {
+        return res
+          .status(403)
+          .json({ message: "Not your assigned user" });
       }
     }
 
@@ -91,15 +116,18 @@ router.get("/:userId", protect, async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    /* ================= FETCH DAILY REVENUE ================= */
+    /* ================= FETCH REVENUE ================= */
     const entries = await Revenue.find({ user: userId })
       .sort({ date: 1 })
-      .select("date amount");
+      .select("date amount description");
 
     res.json(entries);
   } catch (err) {
-    console.error("Revenue fetch error:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("❌ Revenue fetch error:", err);
+    res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
   }
 });
 

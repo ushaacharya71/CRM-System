@@ -4,35 +4,42 @@ import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import AttendancePanel from "../components/AttendancePanel";
 import AttendanceSummary from "../components/AttendanceSummary";
+import ManagerLeaveApproval from "../components/ManagerLeaveApproval";
+import LeaveSummary from "./LeaveSummary";
+import ApplyLeave from "./ApplyLeave";
+import MyLeave from "./MyLeave";
 import api from "../api/axios";
+import TopPerformers from "../components/TopPerformers";
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
   const loggedInUser = JSON.parse(localStorage.getItem("user"));
+  const role = loggedInUser?.role;
 
   const [assignedUsers, setAssignedUsers] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.clear();
     window.location.href = "/";
   };
 
-  /* ---------------- FETCH ASSIGNED USERS ---------------- */
+  /* ================= FETCH ASSIGNED USERS ================= */
   const fetchAssignedUsers = async () => {
     try {
       const res = await api.get("/users/manager/interns");
-      setAssignedUsers(res.data);
+      setAssignedUsers(res.data || []);
     } catch (error) {
       console.error("Error fetching assigned users:", error);
     }
   };
 
-  /* ---------------- FETCH ANNOUNCEMENTS ---------------- */
+  /* ================= FETCH ANNOUNCEMENTS ================= */
   const fetchAnnouncements = async () => {
     try {
       const res = await api.get("/announcements");
-      setAnnouncements(res.data);
+      setAnnouncements(res.data || []);
     } catch (error) {
       console.error("Error loading announcements:", error);
     }
@@ -43,30 +50,49 @@ const ManagerDashboard = () => {
     fetchAnnouncements();
   }, []);
 
-  return (
-    <div className="flex">
-      <Sidebar onLogout={handleLogout} />
+  if (!loggedInUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Loading dashboard…
+      </div>
+    );
+  }
 
-      <div className="flex-1 ml-64 p-6 bg-gray-100 min-h-screen">
-        <Navbar user={loggedInUser} />
+  return (
+    <div className="flex min-h-screen bg-gray-100">
+      {/* SIDEBAR */}
+      <Sidebar
+        onLogout={handleLogout}
+        isOpen={sidebarOpen}
+        setIsOpen={setSidebarOpen}
+      />
+
+      {/* MAIN CONTENT */}
+      <div className="flex-1 p-4 sm:p-6 md:ml-64 bg-gray-100 min-h-screen">
+
+        {/* NAVBAR */}
+        <Navbar
+          user={loggedInUser}
+          onMenuClick={() => setSidebarOpen(true)}
+        />
 
         {/* ================= MANAGER PROFILE ================= */}
         <div className="bg-white rounded-xl shadow p-6 mt-6">
-          <h2 className="text-2xl font-bold text-gray-800">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800">
             Manager Dashboard
           </h2>
           <p className="text-gray-500 mt-1">
-            Manage interns, track performance, update revenue & attendance.
+            Manage employees, approve leaves, and track performance.
           </p>
 
-          <div className="mt-6 flex items-center gap-6">
+          <div className="mt-6 flex flex-col md:flex-row items-center gap-6">
             <img
               src={loggedInUser?.avatar || "/avatar.png"}
               alt="Manager Avatar"
               className="w-20 h-20 rounded-full border"
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 w-full">
               <div className="p-4 border rounded-lg bg-gray-50">
                 <p className="text-sm text-gray-600">Name</p>
                 <p className="font-semibold">{loggedInUser?.name}</p>
@@ -87,69 +113,98 @@ const ManagerDashboard = () => {
           </div>
 
           {/* ACTION BUTTONS */}
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col md:flex-row gap-3">
             <button
               onClick={() => navigate("/manager/stipend")}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition"
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold w-full md:w-auto"
             >
-              Manage Intern Stipends
+              Manage Employee Stipends
             </button>
 
             <button
               onClick={() => navigate("/manager/revenue")}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition ml-3"
+              className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold w-full md:w-auto"
             >
               Update Revenue
             </button>
           </div>
         </div>
 
-        {/* ================= MANAGER ATTENDANCE ================= */}
+        {/* ================= ATTENDANCE ================= */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
           <AttendancePanel />
           <AttendanceSummary />
         </div>
 
+        {/* ================= MANAGER MY LEAVE ================= */}
+        {role === "manager" && (
+          <div className="bg-white rounded-xl shadow p-6 mt-8 space-y-6">
+            <h3 className="text-xl md:text-2xl font-bold text-gray-800">
+              My Leave
+            </h3>
+
+            <LeaveSummary />
+            <ApplyLeave />
+            <MyLeave />
+          </div>
+        )}
+
+        {/* ================= TOP PERFORMERS ================= */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+          <TopPerformers type="daily" title="🏅 Daily Top Performers" />
+          <TopPerformers type="weekly" title="🔥 Weekly Top Performers" />
+          <TopPerformers type="monthly" title="🏆 Monthly Top Performers" />
+        </div>
+
+        {/* ================= EMPLOYEE LEAVE APPROVAL ================= */}
+        <div className="mt-8">
+          <ManagerLeaveApproval />
+        </div>
+
         {/* ================= ASSIGNED USERS ================= */}
         <div className="bg-white rounded-xl shadow p-6 mt-8">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">
-            Assigned Interns & Probation Employees
+            Assigned Employees
           </h3>
 
           {assignedUsers.length === 0 ? (
-            <p className="text-gray-500">No users assigned to you yet.</p>
+            <p className="text-gray-500">No users assigned to you.</p>
           ) : (
-            <table className="w-full border">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="p-3 border">Name</th>
-                  <th className="p-3 border">Email</th>
-                  <th className="p-3 border">Role</th>
-                  <th className="p-3 border">Team</th>
-                  <th className="p-3 border">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignedUsers.map((u) => (
-                  <tr key={u._id} className="border">
-                    <td className="p-3 border">{u.name}</td>
-                    <td className="p-3 border">{u.email}</td>
-                    <td className="p-3 border capitalize">{u.role}</td>
-                    <td className="p-3 border">{u.teamName || "-"}</td>
-                    <td className="p-3 border">
-                      <button
-                        onClick={() =>
-                          navigate(`/manager/view-dashboard/${u._id}`)
-                        }
-                        className="text-blue-600 hover:text-blue-800 font-medium"
-                      >
-                        View Performance
-                      </button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full border text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-3 border">Name</th>
+                    <th className="p-3 border">Email</th>
+                    <th className="p-3 border">Role</th>
+                    <th className="p-3 border">Team</th>
+                    <th className="p-3 border">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {assignedUsers.map((u) => (
+                    <tr key={u._id}>
+                      <td className="p-3 border">{u.name}</td>
+                      <td className="p-3 border">{u.email}</td>
+                      <td className="p-3 border capitalize">{u.role}</td>
+                      <td className="p-3 border">
+                        {u.teamName || "-"}
+                      </td>
+                      <td className="p-3 border">
+                        <button
+                          onClick={() =>
+                            navigate(`/manager/view-dashboard/${u._id}`)
+                          }
+                          className="text-blue-600 font-medium"
+                        >
+                          View Performance
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
@@ -164,7 +219,10 @@ const ManagerDashboard = () => {
           ) : (
             <ul className="space-y-3">
               {announcements.map((a) => (
-                <li key={a._id} className="border p-3 rounded-lg bg-gray-50">
+                <li
+                  key={a._id}
+                  className="border p-3 rounded-lg bg-gray-50"
+                >
                   <p className="font-semibold">{a.title}</p>
                   <p className="text-sm text-gray-600">{a.message}</p>
                   <p className="text-xs text-gray-400 mt-1">

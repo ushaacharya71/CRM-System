@@ -23,24 +23,33 @@ const ManagerStipend = () => {
     }
   };
 
-  const downloadExcel = async () => {
-    try {
-      const res = await api.get("/salary/manager/export", {
-        responseType: "blob",
-      });
 
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "manager-salary-report.xlsx");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      alert("Failed to download Excel");
-      console.error(error);
-    }
-  };
+
+ const downloadExcel = async () => {
+  try {
+    const res = await api.get("/salary/manager/export", {
+      responseType: "blob", // 🔥 IMPORTANT
+    });
+
+    // Create file download
+    const blob = new Blob([res.data], {
+      type:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "manager-stipend-report.xlsx";
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Excel download failed:", error);
+    alert("Failed to download Excel");
+  }
+};
+
 
   /* ------------------------------------
      INIT STIPEND STATE
@@ -213,8 +222,11 @@ const ManagerStipend = () => {
             Download Salary Excel
           </button>
         </div>
+
       )}
+
     </div>
+
   );
 };
 

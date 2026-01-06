@@ -2,6 +2,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import Revenue from "../models/Revenue.js";
+import User from "../models/User.js";
 import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -50,6 +51,73 @@ router.get("/", protect, async (req, res) => {
     console.error("Performance route error:", error);
     res.status(500).json({
       message: "Server error fetching performance data",
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * ------------------------------------------------
+ * 🏆 TOP PERFORMERS (DAILY / WEEKLY / MONTHLY)
+ * ------------------------------------------------
+ * URL: /api/performance/top?type=daily|weekly|monthly
+ */
+router.get("/top", protect, async (req, res) => {
+  try {
+    const { type = "daily" } = req.query;
+
+    let startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    if (type === "weekly") {
+      startDate.setDate(startDate.getDate() - 6);
+    }
+
+    if (type === "monthly") {
+      startDate = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        1
+      );
+    }
+
+    const limit = type === "monthly" ? 5 : 3;
+
+    const top = await Revenue.aggregate([
+      {
+        $match: {
+          date: { $gte: startDate },
+        },
+      },
+      {
+        $group: {
+          _id: "$user",
+          total: { $sum: "$amount" },
+        },
+      },
+      { $sort: { total: -1 } },
+      { $limit: limit },
+    ]);
+
+    const populated = await User.populate(top, {
+      path: "_id",
+      select: "name role avatar",
+    });
+
+    res.json(
+      populated.map((p, index) => ({
+        rank: index + 1,
+        userId: p._id._id,
+        name: p._id.name,
+        role: p._id.role,
+        avatar: p._id.avatar,
+        total: p.total,
+      }))
+    );
+  } catch (error) {
+    console.error("Top performers error:", error);
+    res.status(500).json({
+      message: "Server error fetching top performers",
       error: error.message,
     });
   }

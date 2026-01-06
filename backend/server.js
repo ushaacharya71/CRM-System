@@ -2,15 +2,17 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { connectDB } from "./config/db.js";
-// Route Imports
+
+// ================= ROUTE IMPORTS =================
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import attendanceRoutes from "./routes/attendance.js";
 import announcementRoutes from "./routes/announcements.js";
-import revenueRoutes from "./routes/revenue.js";        // ✅ Corrected import of the revenue routes and placement
+import revenueRoutes from "./routes/revenue.js";
 import analyticsRoutes from "./routes/analytics.js";
 import performanceRoutes from "./routes/performance.js";
 import salaryRoutes from "./routes/salary.js";
+import leaveRoutes from "./routes/leave.js";
 
 dotenv.config();
 
@@ -18,36 +20,40 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
-// Middleware
+// ================= MIDDLEWARE =================
 app.use(cors());
 app.use(express.json());
 
-// DB Connection
+// ================= DB CONNECTION =================
 connectDB(MONGO_URI);
 
-// Test <Route>
-// </Route>
+// ================= TEST ROUTE =================
 app.get("/hello", (req, res) => {
   res.json({ message: "Hello from CRM backend" });
 });
 
-// API Routes (ORDER MATTERS)
+// ================= API ROUTES =================
+// ⚠️ ORDER MATTERS (keep revenue before analytics/performance)
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/announcements", announcementRoutes);
-app.use("/api/revenue", revenueRoutes);      // ✅ MUST BE BEFORE /api/*
-app.use("/api/analytics", analyticsRoutes);  // moved
-app.use("/api/performance", performanceRoutes);
+app.use("/api/revenue", revenueRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/performance", performanceRoutes); // ✅ TOP PERFORMERS
 app.use("/api/salary", salaryRoutes);
+app.use("/api/leaves", leaveRoutes);
 
-// Global Error Handler (ALWAYS LAST)
+// ================= GLOBAL ERROR HANDLER =================
 app.use((err, req, res, next) => {
   console.error("❌ Error:", err.stack);
-  res.status(500).json({ message: "Server Error", error: err.message });
+  res.status(500).json({
+    message: "Server Error",
+    error: err.message,
+  });
 });
 
-// Start Server
+// ================= START SERVER =================
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
