@@ -2,18 +2,21 @@ import React, { useEffect, useState } from "react";
 import api from "../api/axios";
 import { Trophy, Medal } from "lucide-react";
 
-const rankStyles = {
+const rankMeta = {
   1: {
-    bg: "bg-yellow-100 border-yellow-400",
-    icon: <Trophy className="text-yellow-500" size={18} />,
+    ring: "ring-yellow-400",
+    icon: <Trophy className="text-yellow-400" size={18} />,
+    glow: "shadow-yellow-200/50",
   },
   2: {
-    bg: "bg-gray-100 border-gray-400",
-    icon: <Medal className="text-gray-500" size={18} />,
+    ring: "ring-gray-400",
+    icon: <Medal className="text-gray-400" size={16} />,
+    glow: "shadow-gray-200/50",
   },
   3: {
-    bg: "bg-orange-100 border-orange-400",
-    icon: <Medal className="text-orange-500" size={18} />,
+    ring: "ring-orange-400",
+    icon: <Medal className="text-orange-400" size={16} />,
+    glow: "shadow-orange-200/50",
   },
 };
 
@@ -38,61 +41,72 @@ const TopPerformers = ({ type, title }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+    <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-lg">
       {/* HEADER */}
-      <h3 className="text-lg sm:text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-        {title}
-      </h3>
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+          {title}
+        </h3>
+        <span className="text-xs uppercase tracking-widest text-gray-400">
+          Leaderboard
+        </span>
+      </div>
 
-      {/* BODY /**
+      {/* BODY
        * System designed with scalability, security, and clarity in mind.
        * Maintained by: harshjaiswal.prgm@gmail.com updating and sync by ushaachrya71
        * If you're reading this, you care about clean architecture.
        */}
 
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading performers...</p>
+        <p className="text-sm text-gray-500">Loading…</p>
       ) : data.length === 0 ? (
-        <p className="text-gray-500 text-sm">No data available</p>
+        <p className="text-sm text-gray-500">No data available</p>
       ) : (
         <div className="space-y-3">
           {data.map((item, index) => {
             const rank = index + 1;
-            const style = rankStyles[rank] || {
-              bg: "bg-blue-50 border-blue-300",
-              icon: null,
-            };
+            const meta = rankMeta[rank];
 
             return (
               <div
                 key={item.userId}
-                className={`border-l-4 rounded-xl p-3 sm:p-4 transition hover:shadow ${style.bg}`}
+                className={`flex items-center justify-between gap-4
+                rounded-xl px-4 py-3 border border-gray-200
+                bg-white/70 backdrop-blur
+                hover:scale-[1.01] transition-all duration-200
+                ${meta?.glow || "shadow-sm"}`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  {/* LEFT */}
-                  <div className="flex items-center gap-3 justify-center sm:justify-start">
-                    <span className="font-bold text-sm text-gray-600">
-                      #{rank}
-                    </span>
-
-                    {style.icon}
-
-                    <div>
-                      <p className="font-semibold text-sm sm:text-base text-gray-800">
-                        {item.name}
-                      </p>
-                      <p className="text-xs sm:text-sm text-gray-600 capitalize">
-                        {item.role}
-                      </p>
-                    </div>
+                {/* LEFT */}
+                <div className="flex items-center gap-4">
+                  {/* Rank Avatar */}
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center
+                    font-bold text-sm ring-2 ${meta?.ring || "ring-gray-300"}`}
+                  >
+                    {rank}
                   </div>
 
-                  {/* RIGHT */}
-                  <div className="text-center sm:text-right">
-                    <p className="text-lg sm:text-xl font-mono text-gray-900">
+                  <div>
+                    <p className="font-semibold text-gray-800 text-sm sm:text-base">
+                      {item.name}
+                    </p>
+                    <p className="text-xs text-gray-500 capitalize">
+                      {item.role}
+                    </p>
+                  </div>
+                </div>
+
+                {/* RIGHT */}
+                <div className="flex items-center gap-3">
+                  {meta?.icon}
+                  <div className="text-right">
+                    <p className="font-mono font-semibold text-gray-900">
                       ₹ {item.total?.toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-500">{type} revenue</p>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide">
+                      {type}
+                    </p>
                   </div>
                 </div>
               </div>

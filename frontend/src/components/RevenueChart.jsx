@@ -20,44 +20,52 @@ const RevenueChart = ({ data = [] }) => {
   );
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-5 md:p-6">
+    <div
+      className="bg-white rounded-2xl border border-gray-100
+      shadow-sm hover:shadow-lg transition-all duration-300 p-5 md:p-6"
+    >
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <h3 className="text-lg md:text-xl font-bold text-gray-800">
             Revenue Overview
           </h3>
           <p className="text-xs md:text-sm text-gray-500">
-            Daily revenue performance
+            Daily revenue performance insights
           </p>
         </div>
 
-        {/* TOTAL */}
-        <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-xl font-semibold text-sm shadow-sm">
-          Total: ₹ {totalRevenue.toLocaleString()}
+        {/* TOTAL REVENUE */}
+        <div
+          className="px-5 py-2.5 rounded-xl
+          bg-gradient-to-r from-blue-500 to-blue-600
+          text-white font-semibold text-sm shadow-md w-fit"
+        >
+          ₹ {totalRevenue.toLocaleString()}
         </div>
       </div>
 
       {/* TOGGLE */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex items-center gap-2 bg-gray-100 p-1.5 rounded-xl w-fit mb-4">
         {["line", "bar"].map((type) => (
           <button
             key={type}
             onClick={() => setChartType(type)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
-              chartType === type
-                ? "bg-blue-600 text-white shadow"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all
+              ${
+                chartType === type
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
           >
-            {type === "line" ? "Line Chart" : "Bar Chart"}
+            {type === "line" ? "Line" : "Bar"}
           </button>
         ))}
       </div>
 
       {/* CHART */}
       {data.length === 0 ? (
-        <div className="text-center text-gray-500 py-10">
+        <div className="flex items-center justify-center h-[280px] text-gray-400 text-sm">
           No revenue data available
         </div>
       ) : (
@@ -65,17 +73,14 @@ const RevenueChart = ({ data = [] }) => {
           {chartType === "line" ? (
             <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 12 }}
-                stroke="#6b7280"
-              />
-              <YAxis stroke="#6b7280" />
+              <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+              <YAxis stroke="#9ca3af" />
               <Tooltip
                 contentStyle={{
-                  borderRadius: "12px",
+                  borderRadius: "14px",
                   border: "none",
-                  boxShadow: "0 10px 20px rgba(0,0,0,0.08)",
+                  background: "#ffffff",
+                  boxShadow: "0 12px 25px rgba(0,0,0,0.12)",
                 }}
                 formatter={(value) => [`₹ ${value}`, "Revenue"]}
               />
@@ -91,24 +96,21 @@ const RevenueChart = ({ data = [] }) => {
           ) : (
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 12 }}
-                stroke="#6b7280"
-              />
-              <YAxis stroke="#6b7280" />
+              <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+              <YAxis stroke="#9ca3af" />
               <Tooltip
                 contentStyle={{
-                  borderRadius: "12px",
+                  borderRadius: "14px",
                   border: "none",
-                  boxShadow: "0 10px 20px rgba(0,0,0,0.08)",
+                  background: "#ffffff",
+                  boxShadow: "0 12px 25px rgba(0,0,0,0.12)",
                 }}
                 formatter={(value) => [`₹ ${value}`, "Revenue"]}
               />
               <Bar
                 dataKey="amount"
                 fill="#2563eb"
-                radius={[6, 6, 0, 0]}
+                radius={[8, 8, 0, 0]}
               />
             </BarChart>
           )}

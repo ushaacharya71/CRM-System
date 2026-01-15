@@ -9,8 +9,8 @@ import AddAnnouncement from "../components/AddAnnouncement";
 import AdminLeaveApproval from "../components/AdminLeaveApproval";
 import TopPerformers from "../components/TopPerformers";
 import ManagerRevenue from "../components/ManagerRevenue";
-import api from "../api/axios";
 import BirthdayBanner from "../components/BirthdayBanner";
+import api from "../api/axios";
 
 const AdminDashboard = () => {
   const [user, setUser] = useState(null);
@@ -32,7 +32,6 @@ const AdminDashboard = () => {
     fetchAdminAnalytics();
   }, []);
 
-  /* ================= FETCH ANALYTICS ================= */
   const fetchAdminAnalytics = async () => {
     try {
       const [o, r, p] = await Promise.all([
@@ -50,7 +49,6 @@ const AdminDashboard = () => {
     }
   };
 
-  /* ================= DOWNLOAD LEAVE EXCEL ================= */
   const downloadLeaveExcel = async () => {
     try {
       const res = await api.get(`/leaves/export?month=${month}&year=${year}`, {
@@ -64,8 +62,7 @@ const AdminDashboard = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (err) {
-      console.error("Leave export failed", err);
+    } catch {
       alert("Failed to download leave report");
     }
   };
@@ -78,7 +75,7 @@ const AdminDashboard = () => {
   if (!user) return null;
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-200">
       {/* SIDEBAR */}
       <Sidebar
         onLogout={handleLogout}
@@ -86,42 +83,65 @@ const AdminDashboard = () => {
         setIsOpen={setSidebarOpen}
       />
 
-      {/* MAIN */}
-      <div className="flex-1 p-4 md:ml-64">
+      {/* MAIN CONTENT */}
+      <div className="flex-1 md:ml-64 px-4 sm:px-6 py-6 space-y-8">
+        {/* NAVBAR */}
         <Navbar user={user} onMenuClick={() => setSidebarOpen(true)} />
 
-        {/* ANALYTICS */}
-        <AnalyticsCards data={stats} loading={loading} />
-
-        <div className="mt-8 bg-white p-6 rounded-xl shadow">
-          <RevenueChart data={revenueData} />
-        </div>
-
-        <div className="mt-8 bg-white p-6 rounded-xl shadow">
-          <TeamPerformanceChart data={performanceData} />
-        </div>
-
-        {/* MANAGER-WISE REVENUE */}
-        <ManagerRevenue />
+        {/* 🎂 BIRTHDAY */}
         <BirthdayBanner />
 
-        {/* TOP PERFORMERS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-          <TopPerformers type="daily" title="🏅 Daily Top Performers" />
-          <TopPerformers type="weekly" title="🔥 Weekly Top Performers" />
-          <TopPerformers type="monthly" title="🏆 Monthly Top Performers" />
-        </div>
+        {/* 📊 ANALYTICS */}
+        <section>
+          <AnalyticsCards data={stats} loading={loading} />
+        </section>
 
-        {/* LEAVES + EXCEL */}
-        <div className="bg-white rounded-xl shadow p-6 mt-10">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-            <h2 className="text-xl font-semibold">Leave Approvals</h2>
+        {/* 📈 CHARTS */}
+        <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="bg-white rounded-2xl shadow-sm p-5">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Revenue Overview
+            </h3>
+            <RevenueChart data={revenueData} />
+          </div>
 
-            <div className="flex gap-2 flex-wrap">
+          <div className="bg-white rounded-2xl shadow-sm p-5">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Team Performance
+            </h3>
+            <TeamPerformanceChart data={performanceData} />
+          </div>
+        </section>
+
+        {/* 👨‍💼 MANAGER REVENUE */}
+        <section>
+          <ManagerRevenue />
+        </section>
+
+        {/* 🏆 TOP PERFORMERS */}
+        <section>
+          <h3 className="text-xl font-bold text-gray-800 mb-4">
+            Top Performers
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <TopPerformers type="daily" title="🏅 Daily" />
+            <TopPerformers type="weekly" title="🔥 Weekly" />
+            <TopPerformers type="monthly" title="🏆 Monthly" />
+          </div>
+        </section>
+
+        {/* 📝 LEAVES */}
+        <section className="bg-white rounded-2xl shadow-sm p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <h3 className="text-xl font-semibold text-gray-800">
+              Leave Approvals
+            </h3>
+
+            <div className="flex flex-wrap gap-2">
               <select
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
-                className="border rounded-lg px-3 py-2"
+                className="border rounded-lg px-3 py-2 text-sm"
               >
                 {[...Array(12)].map((_, i) => (
                   <option key={i + 1} value={i + 1}>
@@ -133,7 +153,7 @@ const AdminDashboard = () => {
               <select
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
-                className="border rounded-lg px-3 py-2"
+                className="border rounded-lg px-3 py-2 text-sm"
               >
                 {[2024, 2025, 2026].map((y) => (
                   <option key={y} value={y}>
@@ -144,7 +164,7 @@ const AdminDashboard = () => {
 
               <button
                 onClick={downloadLeaveExcel}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
               >
                 ⬇ Download Excel
               </button>
@@ -152,13 +172,13 @@ const AdminDashboard = () => {
           </div>
 
           <AdminLeaveApproval />
-        </div>
+        </section>
 
-        {/* ANNOUNCEMENTS */}
-        <div className="mt-10 bg-white p-6 rounded-xl shadow">
+        {/* 📢 ANNOUNCEMENTS */}
+        <section className="bg-white rounded-2xl shadow-sm p-6">
           <AddAnnouncement />
           <AnnouncementList />
-        </div>
+        </section>
       </div>
     </div>
   );

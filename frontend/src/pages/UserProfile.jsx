@@ -106,132 +106,159 @@ const UserProfile = () => {
   const hideSalaryForUser = user.role === "intern" || user.role === "employee";
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center text-gray-700 hover:text-gray-900 mb-4"
-      >
-        <ArrowLeft size={18} className="mr-2" /> Back
-      </button>
+  <div className="min-h-screen bg-gray-50 p-6">
+    {/* BACK */}
+    <button
+      onClick={() => navigate(-1)}
+      className="flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
+    >
+      <ArrowLeft size={16} className="mr-2" /> Back to users
+    </button>
 
-      {/* ================= PROFILE CARD ================= */}
-      <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-        <div className="flex items-center gap-6">
-          <img
-            src={user.avatar ? user.avatar : defaultAvatar}
-            alt={user.name}
-            className="w-20 h-20 rounded-full border object-cover"
+    {/* ================= PROFILE HEADER ================= */}
+    <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+        <img
+          src={user.avatar || defaultAvatar}
+          alt={user.name}
+          className="w-24 h-24 rounded-full border object-cover"
+        />
+
+        <div className="flex-1">
+          <h2 className="text-xl font-semibold text-gray-900">
+            {user.name}
+          </h2>
+          <p className="text-sm text-gray-600">{user.email}</p>
+
+          <div className="flex flex-wrap gap-3 mt-2">
+            <span className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700 capitalize">
+              {user.role}
+            </span>
+            <span className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
+              {user.teamName || user.position || "—"}
+            </span>
+            <span className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
+              Joined {new Date(user.joiningDate).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* ================= ANALYTICS ================= */}
+    <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">
+          Revenue Performance
+        </h3>
+        <RevenueChart data={performance} />
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">
+          Attendance Overview
+        </h3>
+        <AttendanceChart data={attendance} />
+      </div>
+    </section>
+
+    {/* ================= SALARY (ADMIN / MANAGER) ================= */}
+    {canManageSalary && !hideSalaryForUser && (
+      <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mt-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Salary / Stipend Management
+        </h3>
+
+        {/* FORM */}
+        <form
+          onSubmit={handleSalarySubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
+          <input
+            type="number"
+            placeholder="Base Amount"
+            value={baseSalary}
+            onChange={(e) => setBaseSalary(e.target.value)}
+            className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm
+              focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
-          <div>
-            <h2 className="text-2xl font-semibold">{user.name}</h2>
-            <p className="text-gray-600">{user.email}</p>
-            <p className="text-sm text-gray-500 capitalize">{user.role}</p>
-            <p className="text-sm text-gray-500">
-              {user.teamName || user.position || "—"}
-            </p>
-            <p className="text-sm text-gray-500">
-              Joined: {new Date(user.joiningDate).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
-      </div>
+          <input
+            type="number"
+            placeholder="Incentives"
+            value={bonus}
+            onChange={(e) => setBonus(e.target.value)}
+            className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm
+              focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
-      {/* ================= PERFORMANCE ================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <h3 className="font-semibold mb-4 text-gray-800">
-            Daily Revenue Performance
-          </h3>
-          <RevenueChart data={performance} />
-        </div>
+          <input
+            type="number"
+            placeholder="Deductions"
+            value={deductions}
+            onChange={(e) => setDeductions(e.target.value)}
+            className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm
+              focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <h3 className="font-semibold mb-4 text-gray-800">
-            Attendance Summary
-          </h3>
-          <AttendanceChart data={attendance} />
-        </div>
-      </div>
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm
+              focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
-      {/* ================= SALARY (ADMIN / MANAGER ONLY) /**
- * System designed with scalability, security, and clarity in mind.
- * Maintained by: harshjaiswal.prgm@gmail.com updating and sync by ushaachrya71
- * If you're reading this, you care about clean architecture.
-  ================= */}
-      {canManageSalary && !hideSalaryForUser && (
-        <div className="bg-white p-6 rounded-xl shadow-md mt-6">
-          <h3 className="text-xl font-semibold mb-4 text-gray-800">
-            Salary / Stipend Management
-          </h3>
-
-          <form
-            onSubmit={handleSalarySubmit}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          <button
+            type="submit"
+            className="col-span-1 md:col-span-2
+              bg-blue-600 hover:bg-blue-700
+              text-white text-sm font-medium
+              py-2.5 rounded-xl transition"
           >
-            <input
-              type="number"
-              placeholder="Base Amount"
-              value={baseSalary}
-              onChange={(e) => setBaseSalary(e.target.value)}
-              className="border p-2 rounded"
-            />
+            Update Salary
+          </button>
+        </form>
 
-            <input
-              type="number"
-              placeholder="Incentives"
-              value={bonus}
-              onChange={(e) => setBonus(e.target.value)}
-              className="border p-2 rounded"
-            />
+        {/* HISTORY */}
+        <div className="mt-6">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">
+            Salary History
+          </h4>
 
-            <input
-              type="number"
-              placeholder="Deductions"
-              value={deductions}
-              onChange={(e) => setDeductions(e.target.value)}
-              className="border p-2 rounded"
-            />
+          {salary.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              No salary records found.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {salary.map((s) => (
+                <li
+                  key={s._id}
+                  className="border border-gray-200 rounded-xl p-4 bg-gray-50"
+                >
+                  <div className="flex justify-between text-sm font-medium">
+                    <span>{s.month}</span>
+                    <span className="text-gray-900">
+                      ₹{s.totalSalary}
+                    </span>
+                  </div>
 
-            <input
-              type="month"
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              className="border p-2 rounded"
-            />
-
-            <button
-              type="submit"
-              className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 col-span-2"
-            >
-              Update
-            </button>
-          </form>
-
-          {/* HISTORY */}
-          <div className="mt-6">
-            <h4 className="text-lg font-semibold mb-2">History</h4>
-
-            {salary.length === 0 ? (
-              <p className="text-gray-500">No records</p>
-            ) : (
-              <ul className="space-y-3">
-                {salary.map((s) => (
-                  <li key={s._id} className="border p-3 rounded bg-gray-50">
-                    <p className="font-semibold">{s.month}</p>
-                    <p>Base: ₹{s.baseSalary}</p>
-                    <p>Incentives: ₹{s.bonus}</p>
-                    <p>Deductions: ₹{s.deductions}</p>
-                    <p className="font-bold">Net Pay: ₹{s.totalSalary}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                  <div className="text-xs text-gray-600 mt-2 grid grid-cols-2 gap-y-1">
+                    <span>Base: ₹{s.baseSalary}</span>
+                    <span>Bonus: ₹{s.bonus}</span>
+                    <span>Deductions: ₹{s.deductions}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      )}
-    </div>
-  );
+      </section>
+    )}
+  </div>
+);
+
 };
 
 export default UserProfile;

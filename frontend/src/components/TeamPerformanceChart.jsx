@@ -15,60 +15,96 @@ const TeamPerformanceChart = ({ data = [] }) => {
   const [chartType, setChartType] = useState("bar"); // bar | line
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-gray-700 font-semibold">
-          👥 Team Performance
-        </h3>
+    <div
+      className="bg-white rounded-2xl border border-gray-100
+      shadow-sm hover:shadow-lg transition-all duration-300 p-5 md:p-6"
+    >
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h3 className="text-lg md:text-xl font-bold text-gray-800">
+            Team Performance
+          </h3>
+          <p className="text-xs md:text-sm text-gray-500">
+            Revenue contribution by team members
+          </p>
+        </div>
 
         {/* TOGGLE */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setChartType("bar")}
-            className={`px-3 py-1 rounded text-sm ${
-              chartType === "bar"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-          >
-            Bar
-          </button>
-          <button
-            onClick={() => setChartType("line")}
-            className={`px-3 py-1 rounded text-sm ${
-              chartType === "line"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-          >
-            Line
-          </button>
+        <div className="flex items-center gap-1.5 bg-gray-100 p-1.5 rounded-xl w-fit">
+          {["bar", "line"].map((type) => (
+            <button
+              key={type}
+              onClick={() => setChartType(type)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all
+                ${
+                  chartType === type
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+            >
+              {type === "bar" ? "Bar" : "Line"}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* CHART */}
       {data.length === 0 ? (
-        <p className="text-gray-500">No performance data yet.</p>
+        <div className="flex items-center justify-center h-[280px] text-gray-400 text-sm">
+          No performance data available
+        </div>
       ) : (
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={320}>
           {chartType === "bar" ? (
             <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="revenue" fill="#3b82f6" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 12 }}
+                stroke="#9ca3af"
+              />
+              <YAxis stroke="#9ca3af" />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "14px",
+                  border: "none",
+                  background: "#ffffff",
+                  boxShadow: "0 12px 25px rgba(0,0,0,0.12)",
+                }}
+                formatter={(value) => [`₹ ${value}`, "Revenue"]}
+              />
+              <Bar
+                dataKey="revenue"
+                fill="#2563eb"
+                radius={[8, 8, 0, 0]}
+              />
             </BarChart>
           ) : (
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 12 }}
+                stroke="#9ca3af"
+              />
+              <YAxis stroke="#9ca3af" />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "14px",
+                  border: "none",
+                  background: "#ffffff",
+                  boxShadow: "0 12px 25px rgba(0,0,0,0.12)",
+                }}
+                formatter={(value) => [`₹ ${value}`, "Revenue"]}
+              />
               <Line
                 type="monotone"
                 dataKey="revenue"
-                stroke="#3b82f6"
+                stroke="#2563eb"
                 strokeWidth={3}
+                dot={{ r: 3 }}
+                activeDot={{ r: 6 }}
               />
             </LineChart>
           )}

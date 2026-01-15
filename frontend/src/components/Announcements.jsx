@@ -17,29 +17,61 @@ const Announcements = () => {
   }, []);
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 mt-8">
-      <h3 className="text-gray-700 font-semibold mb-4">📢 Announcements</h3>
+    <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mt-8">
+      {/* HEADER */}
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Announcements
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Company-wide updates and official notices
+          </p>
+        </div>
+      </div>
+
       {announcements.length === 0 ? (
-        <p className="text-gray-500">No announcements yet.</p>
+        <div className="flex items-center justify-center text-sm text-gray-500
+          bg-gray-50 border border-dashed rounded-xl p-6">
+          No announcements have been published yet.
+        </div>
       ) : (
-        <ul className="space-y-4">
+        <div className="space-y-5">
           {announcements.map((a) => (
-            <li key={a._id} className="border-b pb-3">
-              <div className="flex justify-between items-center">
-                <h4 className="text-lg font-semibold text-blue-700">{a.title}</h4>
-                <span className="text-sm text-gray-500">
+            <article
+              key={a._id}
+              className="rounded-xl border border-gray-200 bg-white
+              hover:shadow-md transition-shadow"
+            >
+              {/* META BAR */}
+              <div className="flex items-center justify-between px-5 py-3
+                border-b bg-gray-50 rounded-t-xl"
+              >
+                <span className="text-xs font-medium text-gray-500">
                   {new Date(a.createdAt).toLocaleDateString()}
                 </span>
+
+                <span className="px-3 py-1 rounded-full text-xs font-medium
+                  bg-blue-50 text-blue-700 capitalize">
+                  {a.type.replace("-", " ")}
+                </span>
               </div>
-              <p className="text-gray-700 mt-1">{a.message}</p>
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-lg mt-2 inline-block">
-                {a.type.replace("-", " ")}
-              </span>
-            </li>
+
+              {/* CONTENT */}
+              <div className="px-5 py-4">
+                <h4 className="text-base font-semibold text-gray-900 mb-1">
+                  {a.title}
+                </h4>
+
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {a.message}
+                </p>
+              </div>
+            </article>
           ))}
-        </ul>
+        </div>
       )}
-    </div>
+    </section>
   );
 };
 
