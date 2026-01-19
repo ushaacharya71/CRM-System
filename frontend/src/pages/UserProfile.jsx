@@ -29,7 +29,7 @@ const UserProfile = () => {
     fetchSalary();
   }, [id]);
 
-  /* ---------------- FETCH USER ---------------- */
+  /* ---------------- FETCH New USER  ---------------- */
   const fetchUserData = async () => {
     try {
       const res = await api.get(`/users/${id}`);
