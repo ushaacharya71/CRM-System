@@ -8,7 +8,7 @@ import AnnouncementList from "../components/AnnouncementList";
 import AddAnnouncement from "../components/AddAnnouncement";
 import AdminLeaveApproval from "../components/AdminLeaveApproval";
 import TopPerformers from "../components/TopPerformers";
-import ManagerRevenue from "../components/ManagerRevenue";
+import ManagerRevenue from "../components/ManagerRevenueCards";
 import BirthdayBanner from "../components/BirthdayBanner";
 import api from "../api/axios";
 
