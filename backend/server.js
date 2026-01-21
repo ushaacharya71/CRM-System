@@ -21,8 +21,20 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
+// ================= ✅ CORS (FIXED) =================
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",     // local dev
+      "http://localhost:4173",     // vite preview
+      "https://your-frontend.vercel.app", // 🔴 replace after deploy
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 // ================= MIDDLEWARE =================
-app.use(cors());
 app.use(express.json());
 
 // ================= DB CONNECTION =================
@@ -34,18 +46,16 @@ app.get("/hello", (req, res) => {
 });
 
 // ================= API ROUTES =================
-// ⚠️ ORDER MATTERS (keep revenue before analytics/performance)
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/revenue", revenueRoutes);
 app.use("/api/analytics", analyticsRoutes);
-app.use("/api/performance", performanceRoutes); // ✅ TOP PERFORMERS
+app.use("/api/performance", performanceRoutes);
 app.use("/api/salary", salaryRoutes);
 app.use("/api/leaves", leaveRoutes);
 app.use("/api/birthday", birthdayRoutes);
-
 
 // ================= GLOBAL ERROR HANDLER =================
 app.use((err, req, res, next) => {
