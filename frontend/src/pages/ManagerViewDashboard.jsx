@@ -18,38 +18,67 @@ const ManagerViewDashboard = () => {
   const [attendance, setAttendance] = useState([]);
 
   useEffect(() => {
+    if (!id) return;
     fetchUser();
     fetchPerformance();
     fetchAttendance();
   }, [id]);
 
+  /* ================= FETCH USER ================= */
   const fetchUser = async () => {
     try {
       const res = await api.get(`/users/${id}`);
-      setUser(res.data);
+
+      // ✅ normalize user
+      const normalized =
+        res.data?.user || res.data?.data || res.data || null;
+
+      setUser(normalized);
     } catch (err) {
-      console.error("User fetch failed");
+      console.error("User fetch failed", err);
+      setUser(null);
     }
   };
 
+  /* ================= FETCH PERFORMANCE ================= */
   const fetchPerformance = async () => {
     try {
       const res = await api.get(`/revenue/${id}`);
-      setPerformance(res.data || []);
-    } catch {
+
+      const normalized =
+        Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
+
+      setPerformance(normalized);
+    } catch (err) {
+      console.error("Performance fetch failed", err);
       setPerformance([]);
     }
   };
 
+  /* ================= FETCH ATTENDANCE ================= */
   const fetchAttendance = async () => {
     try {
       const res = await api.get(`/attendance/summary/${id}`);
-      setAttendance(res.data.summary || []);
-    } catch {
+
+      const normalized =
+        Array.isArray(res.data?.summary)
+          ? res.data.summary
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
+
+      setAttendance(normalized);
+    } catch (err) {
+      console.error("Attendance fetch failed", err);
       setAttendance([]);
     }
   };
 
+  /* ================= LOADING ================= */
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen text-gray-500">
@@ -57,6 +86,10 @@ const ManagerViewDashboard = () => {
       </div>
     );
   }
+
+  // ✅ final safety
+  const safePerformance = Array.isArray(performance) ? performance : [];
+  const safeAttendance = Array.isArray(attendance) ? attendance : [];
 
   return (
     <div className="flex">
@@ -100,7 +133,7 @@ const ManagerViewDashboard = () => {
             <h3 className="font-semibold text-gray-700 mb-3">
               💰 Revenue Performance
             </h3>
-            <RevenueChart data={performance} />
+            <RevenueChart data={safePerformance} />
           </motion.div>
 
           {/* ATTENDANCE */}
@@ -113,7 +146,7 @@ const ManagerViewDashboard = () => {
             <h3 className="font-semibold text-gray-700 mb-3">
               🕒 Attendance Summary
             </h3>
-            <AttendanceSummary data={attendance} />
+            <AttendanceSummary data={safeAttendance} />
           </motion.div>
         </div>
 

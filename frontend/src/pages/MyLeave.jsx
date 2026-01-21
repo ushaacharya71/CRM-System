@@ -8,9 +8,21 @@ const MyLeave = () => {
   const fetchMyLeaves = async () => {
     try {
       const res = await api.get("/leaves/my");
-      setLeaves(res.data || []);
+
+      // ✅ Normalize response safely
+      const normalized =
+        Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data?.leaves)
+          ? res.data.leaves
+          : [];
+
+      setLeaves(normalized);
     } catch (error) {
       console.error("Failed to fetch my leaves", error);
+      setLeaves([]);
     } finally {
       setLoading(false);
     }
@@ -28,13 +40,16 @@ const MyLeave = () => {
     );
   }
 
+  // ✅ Extra runtime safety
+  const safeLeaves = Array.isArray(leaves) ? leaves : [];
+
   return (
     <div className="bg-white rounded-xl shadow p-6 mt-6">
       <h3 className="text-xl font-semibold text-gray-800 mb-4">
         My Leave Requests
       </h3>
 
-      {leaves.length === 0 ? (
+      {safeLeaves.length === 0 ? (
         <p className="text-gray-500">No leave requests yet.</p>
       ) : (
         <>
@@ -53,7 +68,7 @@ const MyLeave = () => {
                 </tr>
               </thead>
               <tbody>
-                {leaves.map((l) => (
+                {safeLeaves.map((l) => (
                   <tr key={l._id}>
                     <td className="p-3 border capitalize">{l.type}</td>
 
@@ -83,7 +98,7 @@ const MyLeave = () => {
                             : "bg-yellow-100 text-yellow-700"
                         }`}
                       >
-                        {l.status.toUpperCase()}
+                        {l.status?.toUpperCase()}
                       </span>
                     </td>
 
@@ -100,13 +115,15 @@ const MyLeave = () => {
 
           {/* ================= MOBILE CARDS ================= */}
           <div className="space-y-4 md:hidden">
-            {leaves.map((l) => (
+            {safeLeaves.map((l) => (
               <div
                 key={l._id}
                 className="border rounded-lg p-4 bg-gray-50"
               >
                 <div className="flex justify-between items-center mb-2">
-                  <p className="font-semibold capitalize">{l.type} Leave</p>
+                  <p className="font-semibold capitalize">
+                    {l.type} Leave
+                  </p>
                   <span
                     className={`px-2 py-1 rounded text-xs font-semibold ${
                       l.status === "approved"
@@ -116,7 +133,7 @@ const MyLeave = () => {
                         : "bg-yellow-100 text-yellow-700"
                     }`}
                   >
-                    {l.status.toUpperCase()}
+                    {l.status?.toUpperCase()}
                   </span>
                 </div>
 

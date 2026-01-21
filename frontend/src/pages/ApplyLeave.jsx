@@ -18,9 +18,17 @@ const ApplyLeave = () => {
   const fetchSummary = async () => {
     try {
       const res = await api.get("/leaves/summary");
-      setSummary(res.data);
+
+      const data =
+        res.data?.summary ||
+        res.data?.data ||
+        res.data ||
+        null;
+
+      setSummary(data);
     } catch (err) {
       console.error("Failed to load leave summary");
+      setSummary(null);
     }
   };
 
@@ -40,22 +48,32 @@ const ApplyLeave = () => {
   };
 
   /* ================= CALCULATE DAYS ================= */
-  const totalDays =
-    form.fromDate && form.toDate
-      ? Math.floor(
-          (new Date(form.toDate) - new Date(form.fromDate)) /
-            (1000 * 60 * 60 * 24)
-        ) + 1
-      : 0;
+  const totalDays = (() => {
+    if (!form.fromDate || !form.toDate) return 0;
+
+    const from = new Date(form.fromDate);
+    const to = new Date(form.toDate);
+
+    if (to < from) return 0;
+
+    const diff =
+      (to.setHours(0, 0, 0, 0) -
+        from.setHours(0, 0, 0, 0)) /
+      (1000 * 60 * 60 * 24);
+
+    return diff + 1;
+  })();
 
   /* ================= BALANCE ================= */
   const remaining =
     form.type && summary
-      ? summary[form.type]?.remaining ?? 0
+      ? summary?.[form.type]?.remaining ?? 0
       : null;
 
   const isExhausted =
-    remaining !== null && totalDays > 0 && totalDays > remaining;
+    remaining !== null &&
+    totalDays > 0 &&
+    totalDays > remaining;
 
   /* ================= SUBMIT ================= */
   const submit = async () => {
@@ -68,6 +86,11 @@ const ApplyLeave = () => {
 
     if (new Date(toDate) < new Date(fromDate)) {
       alert("To date cannot be before from date");
+      return;
+    }
+
+    if (!summary) {
+      alert("Leave balance not loaded yet");
       return;
     }
 
@@ -88,7 +111,6 @@ const ApplyLeave = () => {
 
       alert("✅ Leave applied successfully");
 
-      // reset form
       setForm({
         type: "",
         fromDate: "",
@@ -96,10 +118,12 @@ const ApplyLeave = () => {
         reason: "",
       });
 
-      // refresh balance
       fetchSummary();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to apply leave");
+      alert(
+        err.response?.data?.message ||
+          "Failed to apply leave"
+      );
     } finally {
       setLoading(false);
     }
@@ -125,11 +149,14 @@ const ApplyLeave = () => {
       {form.type && summary && (
         <p
           className={`text-sm mb-2 ${
-            isExhausted ? "text-red-600" : "text-green-600"
+            isExhausted
+              ? "text-red-600"
+              : "text-green-600"
           }`}
         >
           Remaining {form.type} leave: {remaining}
-          {totalDays > 0 && ` | Requested: ${totalDays} days`}
+          {totalDays > 0 &&
+            ` | Requested: ${totalDays} days`}
         </p>
       )}
 
@@ -162,9 +189,9 @@ const ApplyLeave = () => {
 
       <button
         onClick={submit}
-        disabled={loading || isExhausted}
+        disabled={loading || isExhausted || !summary}
         className={`px-4 py-2 rounded w-full text-white transition ${
-          loading || isExhausted
+          loading || isExhausted || !summary
             ? "bg-gray-400 cursor-not-allowed"
             : "bg-blue-600 hover:bg-blue-700"
         }`}

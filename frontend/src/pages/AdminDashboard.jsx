@@ -32,6 +32,7 @@ const AdminDashboard = () => {
     fetchAdminAnalytics();
   }, []);
 
+  /* ================= FETCH ANALYTICS ================= */
   const fetchAdminAnalytics = async () => {
     try {
       const [o, r, p] = await Promise.all([
@@ -39,29 +40,58 @@ const AdminDashboard = () => {
         api.get("/analytics/revenue"),
         api.get("/analytics/performance"),
       ]);
-      setStats(o.data);
-      setRevenueData(r.data);
-      setPerformanceData(p.data);
+
+      // ✅ NORMALIZE RESPONSES
+      const overview =
+        typeof o.data === "object" && !Array.isArray(o.data)
+          ? o.data
+          : o.data?.data || {};
+
+      const revenue =
+        Array.isArray(r.data)
+          ? r.data
+          : Array.isArray(r.data?.data)
+          ? r.data.data
+          : [];
+
+      const performance =
+        Array.isArray(p.data)
+          ? p.data
+          : Array.isArray(p.data?.data)
+          ? p.data.data
+          : [];
+
+      setStats(overview);
+      setRevenueData(revenue);
+      setPerformanceData(performance);
     } catch (err) {
       console.error("Admin analytics failed", err);
+      setStats({});
+      setRevenueData([]);
+      setPerformanceData([]);
     } finally {
       setLoading(false);
     }
   };
 
+  /* ================= DOWNLOAD LEAVE EXCEL ================= */
   const downloadLeaveExcel = async () => {
     try {
-      const res = await api.get(`/leaves/export?month=${month}&year=${year}`, {
-        responseType: "blob",
-      });
+      const res = await api.get(
+        `/leaves/export?month=${month}&year=${year}`,
+        { responseType: "blob" }
+      );
 
-      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const url = window.URL.createObjectURL(
+        new Blob([res.data])
+      );
       const link = document.createElement("a");
       link.href = url;
       link.download = `Leave_Report_${month}_${year}.xlsx`;
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch {
       alert("Failed to download leave report");
     }
@@ -73,6 +103,15 @@ const AdminDashboard = () => {
   };
 
   if (!user) return null;
+
+  // ✅ FINAL SAFETY
+  const safeRevenueData = Array.isArray(revenueData)
+    ? revenueData
+    : [];
+
+  const safePerformanceData = Array.isArray(performanceData)
+    ? performanceData
+    : [];
 
   return (
     <div className="flex min-h-screen bg-gray-200">
@@ -102,14 +141,14 @@ const AdminDashboard = () => {
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Revenue Overview
             </h3>
-            <RevenueChart data={revenueData} />
+            <RevenueChart data={safeRevenueData} />
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm p-5">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Team Performance
             </h3>
-            <TeamPerformanceChart data={performanceData} />
+            <TeamPerformanceChart data={safePerformanceData} />
           </div>
         </section>
 
@@ -140,7 +179,7 @@ const AdminDashboard = () => {
             <div className="flex flex-wrap gap-2">
               <select
                 value={month}
-                onChange={(e) => setMonth(e.target.value)}
+                onChange={(e) => setMonth(Number(e.target.value))}
                 className="border rounded-lg px-3 py-2 text-sm"
               >
                 {[...Array(12)].map((_, i) => (
@@ -152,7 +191,7 @@ const AdminDashboard = () => {
 
               <select
                 value={year}
-                onChange={(e) => setYear(e.target.value)}
+                onChange={(e) => setYear(Number(e.target.value))}
                 className="border rounded-lg px-3 py-2 text-sm"
               >
                 {[2024, 2025, 2026].map((y) => (
@@ -164,7 +203,8 @@ const AdminDashboard = () => {
 
               <button
                 onClick={downloadLeaveExcel}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                className="bg-green-600 hover:bg-green-700
+                text-white px-4 py-2 rounded-lg text-sm font-medium"
               >
                 ⬇ Download Excel
               </button>

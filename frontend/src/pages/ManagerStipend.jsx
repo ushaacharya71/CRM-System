@@ -15,41 +15,52 @@ const ManagerStipend = () => {
   const fetchInterns = async () => {
     try {
       const res = await api.get("/users/manager/interns");
-      setInterns(res.data);
-      initializeStipends(res.data);
+
+      // ✅ NORMALIZE RESPONSE (ALWAYS ARRAY)
+      const normalized =
+        Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data?.users)
+          ? res.data.users
+          : [];
+
+      setInterns(normalized);
+      initializeStipends(normalized);
     } catch (err) {
       console.error(err);
       alert("Failed to load interns");
+      setInterns([]); // prevent crash
     }
   };
 
+  /* ------------------------------------
+     DOWNLOAD EXCEL
+  ------------------------------------ */
+  const downloadExcel = async () => {
+    try {
+      const res = await api.get("/salary/manager/export", {
+        responseType: "blob", // 🔥 IMPORTANT
+      });
 
+      const blob = new Blob([res.data], {
+        type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
 
- const downloadExcel = async () => {
-  try {
-    const res = await api.get("/salary/manager/export", {
-      responseType: "blob", // 🔥 IMPORTANT
-    });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "manager-stipend-report.xlsx";
+      link.click();
 
-    // Create file download
-    const blob = new Blob([res.data], {
-      type:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "manager-stipend-report.xlsx";
-    link.click();
-
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("Excel download failed:", error);
-    alert("Failed to download Excel");
-  }
-};
-
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Excel download failed:", error);
+      alert("Failed to download Excel");
+    }
+  };
 
   /* ------------------------------------
      INIT STIPEND STATE
@@ -74,7 +85,7 @@ const ManagerStipend = () => {
      UPDATE STIPEND
   ------------------------------------ */
   const handleUpdate = async (internId) => {
-    const { baseSalary, bonus, deductions } = stipends[internId];
+    const { baseSalary, bonus, deductions } = stipends[internId] || {};
 
     if (!baseSalary || Number(baseSalary) <= 0) {
       alert("Enter valid gross stipend");
@@ -101,6 +112,9 @@ const ManagerStipend = () => {
     }
   };
 
+  // ✅ FINAL SAFETY GUARD
+  const safeInterns = Array.isArray(interns) ? interns : [];
+
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <h1 className="text-2xl font-bold mb-4">Intern Stipend Management</h1>
@@ -116,7 +130,7 @@ const ManagerStipend = () => {
         />
       </div>
 
-      {interns.length === 0 ? (
+      {safeInterns.length === 0 ? (
         <p className="text-gray-500">No interns assigned to you.</p>
       ) : (
         <div className="bg-white rounded-xl shadow p-6 overflow-x-auto">
@@ -133,7 +147,7 @@ const ManagerStipend = () => {
             </thead>
 
             <tbody>
-              {interns.map((intern) => {
+              {safeInterns.map((intern) => {
                 const s = stipends[intern._id] || {};
                 const net =
                   Number(s.baseSalary || 0) +
@@ -214,7 +228,9 @@ const ManagerStipend = () => {
               })}
             </tbody>
           </table>
-          <br></br>
+
+          <br />
+
           <button
             onClick={downloadExcel}
             className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-xl mb-4"
@@ -222,11 +238,8 @@ const ManagerStipend = () => {
             Download Salary Excel
           </button>
         </div>
-
       )}
-
     </div>
-
   );
 };
 

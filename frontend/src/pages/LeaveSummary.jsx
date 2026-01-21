@@ -9,9 +9,10 @@ const LeaveSummary = () => {
     const fetchSummary = async () => {
       try {
         const res = await api.get("/leaves/summary");
-        setSummary(res.data); // ✅ trust backend only
+        setSummary(res.data || {});
       } catch (error) {
         console.error("Failed to fetch leave summary", error);
+        setSummary({});
       }
     };
 
@@ -35,6 +36,19 @@ const LeaveSummary = () => {
     );
   }
 
+  // ✅ SAFE NORMALIZATION (NO HOOKS)
+  const casual = summary.casual || {
+    used: 0,
+    total: 0,
+    remaining: 0,
+  };
+
+  const sick = summary.sick || {
+    used: 0,
+    total: 0,
+    remaining: 0,
+  };
+
   return (
     <div className="bg-white rounded-xl shadow p-6">
       <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -47,14 +61,14 @@ const LeaveSummary = () => {
           <p className="text-sm text-gray-600">Casual Leave</p>
 
           <p className="text-xl font-bold text-blue-600">
-            {summary.casual.used} / {summary.casual.total}
+            {casual.used} / {casual.total}
           </p>
 
           <p className="text-sm text-gray-500">
-            Remaining: {summary.casual.remaining}
+            Remaining: {casual.remaining}
           </p>
 
-          {summary.casual.remaining === 0 && (
+          {casual.remaining === 0 && (
             <p className="text-xs text-red-500 mt-1">
               Casual leave exhausted
             </p>
@@ -66,14 +80,14 @@ const LeaveSummary = () => {
           <p className="text-sm text-gray-600">Sick Leave</p>
 
           <p className="text-xl font-bold text-red-600">
-            {summary.sick.used} / {summary.sick.total}
+            {sick.used} / {sick.total}
           </p>
 
           <p className="text-sm text-gray-500">
-            Remaining: {summary.sick.remaining}
+            Remaining: {sick.remaining}
           </p>
 
-          {summary.sick.remaining === 0 && (
+          {sick.remaining === 0 && (
             <p className="text-xs text-red-500 mt-1">
               Sick leave exhausted
             </p>

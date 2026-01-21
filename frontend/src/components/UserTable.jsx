@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
@@ -6,17 +6,21 @@ const UserTable = ({ users, onEdit, onDelete }) => {
   const navigate = useNavigate();
   const loggedInUser = JSON.parse(localStorage.getItem("user"));
 
+  // ✅ Normalize users prop
+  const safeUsers = useMemo(
+    () => (Array.isArray(users) ? users : []),
+    [users]
+  );
+
   /* --------------------------------
       HANDLE VIEW NAVIGATION SAFELY
   -------------------------------- */
   const handleView = (user) => {
-    // Admin can view anyone
     if (loggedInUser.role === "admin") {
       navigate(`/admin/user/${user._id}`);
       return;
     }
 
-    // Manager can view only their interns / employees
     if (
       loggedInUser.role === "manager" &&
       user.manager === loggedInUser._id
@@ -46,7 +50,7 @@ const UserTable = ({ users, onEdit, onDelete }) => {
       </thead>
 
       <tbody>
-        {users.map((user) => (
+        {safeUsers.map((user) => (
           <tr key={user._id} className="hover:bg-gray-50 transition">
             <td className="p-3 border">{user.name}</td>
             <td className="p-3 border">{user.email}</td>
@@ -68,7 +72,6 @@ const UserTable = ({ users, onEdit, onDelete }) => {
             </td>
 
             <td className="p-3 border space-x-2">
-              {/* VIEW */}
               <button
                 onClick={() => handleView(user)}
                 className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
@@ -76,7 +79,6 @@ const UserTable = ({ users, onEdit, onDelete }) => {
                 View
               </button>
 
-              {/* EDIT (Admin only) */}
               {loggedInUser.role === "admin" && (
                 <button
                   onClick={() => onEdit(user)}
@@ -86,7 +88,6 @@ const UserTable = ({ users, onEdit, onDelete }) => {
                 </button>
               )}
 
-              {/* DELETE (Admin only) */}
               {loggedInUser.role === "admin" && (
                 <button
                   onClick={() => onDelete(user)}

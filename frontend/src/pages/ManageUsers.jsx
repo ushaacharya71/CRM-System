@@ -16,9 +16,21 @@ const ManageUsers = () => {
   const fetchUsers = async () => {
     try {
       const res = await api.get("/users");
-      setUsers(res.data);
+
+      // ✅ SAFETY NORMALIZATION
+      const normalized =
+        Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data?.users)
+          ? res.data.users
+          : [];
+
+      setUsers(normalized);
     } catch (err) {
       console.error("Error fetching users:", err);
+      setUsers([]);
       alert("Failed to fetch users");
     }
   };
@@ -58,11 +70,12 @@ const ManageUsers = () => {
 
   const handleSave = async (data) => {
     try {
-      if (isEdit) {
+      if (isEdit && selectedUser?._id) {
         await api.put(`/users/${selectedUser._id}`, data);
       } else {
         await api.post("/users", data);
       }
+
       setShowModal(false);
       fetchUsers();
     } catch (err) {
@@ -70,6 +83,9 @@ const ManageUsers = () => {
       alert(err.response?.data?.message || "Failed to save user");
     }
   };
+
+  // ✅ FINAL SAFETY
+  const safeUsers = Array.isArray(users) ? users : [];
 
   return (
     <div className="p-3 sm:p-6 bg-gray-100 min-h-screen">
@@ -104,11 +120,11 @@ const ManageUsers = () => {
           </button>
         </div>
 
-        {/* TABLE WRAPPER */}
+        {/* TABLE */}
         <div className="relative -mx-4 sm:mx-0 overflow-x-auto">
           <div className="min-w-[700px] sm:min-w-full px-4 sm:px-0">
             <UserTable
-              users={users}
+              users={safeUsers}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
@@ -121,7 +137,7 @@ const ManageUsers = () => {
         <UserModal
           user={selectedUser}
           isEdit={isEdit}
-          allUsers={users}
+          allUsers={safeUsers}
           onClose={() => setShowModal(false)}
           onSave={handleSave}
         />
