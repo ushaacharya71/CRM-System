@@ -8,9 +8,9 @@ import AnnouncementList from "../components/AnnouncementList";
 import AddAnnouncement from "../components/AddAnnouncement";
 import AdminLeaveApproval from "../components/AdminLeaveApproval";
 import TopPerformers from "../components/TopPerformers";
-import ManagerRevenue from "../components/ManagerRevenue";
 import BirthdayBanner from "../components/BirthdayBanner";
 import api from "../api/axios";
+import ManagerRevenueCards from "../components/ManagerRevenueCards";
 
 const AdminDashboard = () => {
   const [user, setUser] = useState(null);
@@ -154,7 +154,7 @@ const AdminDashboard = () => {
 
         {/* 👨‍💼 MANAGER REVENUE */}
         <section>
-          <ManagerRevenue />
+          <ManagerRevenueCards />
         </section>
 
         {/* 🏆 TOP PERFORMERS */}
