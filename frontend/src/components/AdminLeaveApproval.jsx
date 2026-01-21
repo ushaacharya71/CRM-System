@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import api from "../api/axios";
 
 const AdminLeaveApproval = () => {
@@ -8,10 +8,23 @@ const AdminLeaveApproval = () => {
 
   const fetchLeaves = async () => {
     try {
+      setLoading(true);
       const res = await api.get("/leaves/pending");
-      setLeaves(res.data || []);
+
+      // ✅ Normalize response (ALWAYS array)
+      const normalized =
+        Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data?.leaves)
+          ? res.data.leaves
+          : [];
+
+      setLeaves(normalized);
     } catch (err) {
       console.error("Failed to fetch admin leaves", err);
+      setLeaves([]); // prevent crash
     } finally {
       setLoading(false);
     }
@@ -33,6 +46,12 @@ const AdminLeaveApproval = () => {
     }
   };
 
+  // ✅ Extra guard
+  const safeLeaves = useMemo(
+    () => (Array.isArray(leaves) ? leaves : []),
+    [leaves]
+  );
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow p-6 mt-8 text-gray-500">
@@ -53,7 +72,7 @@ const AdminLeaveApproval = () => {
         </div>
       </div>
 
-      {leaves.length === 0 ? (
+      {safeLeaves.length === 0 ? (
         <p className="text-gray-500">✅ No pending manager leave requests</p>
       ) : (
         <>
@@ -73,10 +92,12 @@ const AdminLeaveApproval = () => {
                 </tr>
               </thead>
               <tbody>
-                {leaves.map((l) => (
+                {safeLeaves.map((l) => (
                   <tr key={l._id}>
-                    <td className="p-3 border">{l.user.name}</td>
-                    <td className="p-3 border">{l.user.teamName || "-"}</td>
+                    <td className="p-3 border">{l.user?.name || "—"}</td>
+                    <td className="p-3 border">
+                      {l.user?.teamName || "-"}
+                    </td>
                     <td className="p-3 border capitalize">{l.type}</td>
                     <td className="p-3 border">
                       {new Date(l.fromDate).toLocaleDateString()}
@@ -91,14 +112,18 @@ const AdminLeaveApproval = () => {
                     <td className="p-3 border space-x-2">
                       <button
                         disabled={processingId === l._id}
-                        onClick={() => handleAction(l._id, "approved")}
+                        onClick={() =>
+                          handleAction(l._id, "approved")
+                        }
                         className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded disabled:opacity-50"
                       >
                         Approve
                       </button>
                       <button
                         disabled={processingId === l._id}
-                        onClick={() => handleAction(l._id, "rejected")}
+                        onClick={() =>
+                          handleAction(l._id, "rejected")
+                        }
                         className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded disabled:opacity-50"
                       >
                         Reject
@@ -112,21 +137,27 @@ const AdminLeaveApproval = () => {
 
           {/* ================= MOBILE CARDS ================= */}
           <div className="space-y-4 md:hidden">
-            {leaves.map((l) => (
-              <div key={l._id} className="border rounded-lg p-4 bg-gray-50">
+            {safeLeaves.map((l) => (
+              <div
+                key={l._id}
+                className="border rounded-lg p-4 bg-gray-50"
+              >
                 <div className="flex justify-between items-center mb-2">
-                  <p className="font-semibold">{l.user.name}</p>
+                  <p className="font-semibold">
+                    {l.user?.name || "—"}
+                  </p>
                   <span className="capitalize text-sm text-gray-600">
                     {l.type}
                   </span>
                 </div>
 
                 <p className="text-sm text-gray-600">
-                  Team: {l.user.teamName || "-"}
+                  Team: {l.user?.teamName || "-"}
                 </p>
 
                 <p className="text-sm text-gray-600">
-                  📅 {new Date(l.fromDate).toLocaleDateString()} →{" "}
+                  📅{" "}
+                  {new Date(l.fromDate).toLocaleDateString()} →{" "}
                   {new Date(l.toDate).toLocaleDateString()}
                 </p>
 
@@ -134,19 +165,25 @@ const AdminLeaveApproval = () => {
                   Days: <strong>{l.totalDays}</strong>
                 </p>
 
-                <p className="text-sm text-gray-600">Reason: {l.reason}</p>
+                <p className="text-sm text-gray-600">
+                  Reason: {l.reason}
+                </p>
 
                 <div className="flex gap-3 mt-3">
                   <button
                     disabled={processingId === l._id}
-                    onClick={() => handleAction(l._id, "approved")}
+                    onClick={() =>
+                      handleAction(l._id, "approved")
+                    }
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded disabled:opacity-50"
                   >
                     Approve
                   </button>
                   <button
                     disabled={processingId === l._id}
-                    onClick={() => handleAction(l._id, "rejected")}
+                    onClick={() =>
+                      handleAction(l._id, "rejected")
+                    }
                     className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded disabled:opacity-50"
                   >
                     Reject

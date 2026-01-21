@@ -18,9 +18,21 @@ const ManagerRevenue = () => {
   const fetchUsers = async () => {
     try {
       const res = await api.get("/users/manager/interns");
-      setUsers(res.data);
+
+      // ✅ NORMALIZE RESPONSE (ALWAYS ARRAY)
+      const normalized =
+        Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data?.users)
+          ? res.data.users
+          : [];
+
+      setUsers(normalized);
     } catch (error) {
       console.error("Failed to fetch users:", error);
+      setUsers([]); // prevent crash
     }
   };
 
@@ -76,6 +88,9 @@ const ManagerRevenue = () => {
     }
   };
 
+  // ✅ FINAL SAFETY GUARD
+  const safeUsers = Array.isArray(users) ? users : [];
+
   /* ===============================
      UI
   =============================== */
@@ -87,7 +102,8 @@ const ManagerRevenue = () => {
         <Navbar user={manager} />
 
         {/* HEADER */}
-        <section className="relative mt-6 overflow-hidden rounded-[28px]
+        <section
+          className="relative mt-6 overflow-hidden rounded-[28px]
           bg-gradient-to-r from-orange-500 via-amber-500 to-orange-400
           text-white p-6 sm:p-8 shadow-2xl"
         >
@@ -100,13 +116,13 @@ const ManagerRevenue = () => {
         </section>
 
         {/* CONTENT */}
-        {users.length === 0 ? (
+        {safeUsers.length === 0 ? (
           <div className="mt-10 text-gray-500">
             No users assigned to you.
           </div>
         ) : (
           <>
-            {/* DESKTOP TABLE */}
+            {/* ================= DESKTOP TABLE ================= */}
             <div className="hidden lg:block mt-10 bg-white border rounded-2xl shadow-sm overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-gray-600">
@@ -121,7 +137,7 @@ const ManagerRevenue = () => {
                 </thead>
 
                 <tbody>
-                  {users.map((u) => (
+                  {safeUsers.map((u) => (
                     <tr key={u._id} className="border-t hover:bg-gray-50">
                       <td className="p-4 font-medium">{u.name}</td>
                       <td className="p-4 capitalize">{u.role}</td>
@@ -175,9 +191,9 @@ const ManagerRevenue = () => {
               </table>
             </div>
 
-            {/* MOBILE CARDS */}
+            {/* ================= MOBILE CARDS ================= */}
             <div className="lg:hidden mt-10 space-y-4">
-              {users.map((u) => (
+              {safeUsers.map((u) => (
                 <div
                   key={u._id}
                   className="bg-white border rounded-2xl shadow-sm p-5"

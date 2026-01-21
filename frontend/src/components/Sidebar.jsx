@@ -23,12 +23,11 @@ const Sidebar = ({ onLogout, isOpen, setIsOpen }) => {
     { name: "Announcements", path: "/admin/announcements", icon: <Megaphone size={20} /> },
   ];
 
-  const SidebarContent = (
-    <motion.aside
-      initial={{ x: -260 }}
-      animate={{ x: 0 }}
-      exit={{ x: -260 }}
-      transition={{ type: "spring", stiffness: 260, damping: 26 }}
+  const isActive = (path) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
+
+  const Content = (
+    <aside
       className="w-64 h-screen fixed left-0 top-0 z-50 flex flex-col
       bg-gradient-to-b from-orange-500 via-orange-600 to-orange-700
       shadow-2xl text-white"
@@ -42,6 +41,7 @@ const Sidebar = ({ onLogout, isOpen, setIsOpen }) => {
           Admin Panel
         </p>
 
+        {/* CLOSE (MOBILE) */}
         <button
           onClick={() => setIsOpen(false)}
           className="absolute top-4 right-4 md:hidden text-white/70 hover:text-white"
@@ -53,21 +53,21 @@ const Sidebar = ({ onLogout, isOpen, setIsOpen }) => {
       {/* NAV */}
       <nav className="flex flex-col mt-6 space-y-1.5 px-3">
         {links.map((link) => {
-          const active = location.pathname === link.path;
+          const active = isActive(link.path);
 
           return (
             <Link
               key={link.name}
               to={link.path}
               onClick={() => setIsOpen(false)}
-              className={`group relative flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all
+              className={`group relative flex items-center gap-3 px-4 py-2.5
+                rounded-lg text-sm font-medium transition-all
                 ${
                   active
                     ? "bg-white/15 text-white"
                     : "text-white/80 hover:bg-white/10 hover:text-white"
                 }`}
             >
-              {/* ACTIVE INDICATOR */}
               {active && (
                 <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-yellow-300" />
               )}
@@ -96,13 +96,13 @@ const Sidebar = ({ onLogout, isOpen, setIsOpen }) => {
           © 2025 Glowlogics
         </p>
       </div>
-    </motion.aside>
+    </aside>
   );
 
   return (
     <>
-      {/* DESKTOP */}
-      <div className="hidden md:block">{SidebarContent}</div>
+      {/* DESKTOP (NO ANIMATION) */}
+      <div className="hidden md:block">{Content}</div>
 
       {/* MOBILE */}
       <AnimatePresence>
@@ -115,7 +115,15 @@ const Sidebar = ({ onLogout, isOpen, setIsOpen }) => {
               onClick={() => setIsOpen(false)}
               className="fixed inset-0 bg-black z-40 md:hidden"
             />
-            {SidebarContent}
+
+            <motion.div
+              initial={{ x: -260 }}
+              animate={{ x: 0 }}
+              exit={{ x: -260 }}
+              transition={{ type: "spring", stiffness: 260, damping: 26 }}
+            >
+              {Content}
+            </motion.div>
           </>
         )}
       </AnimatePresence>

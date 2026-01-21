@@ -4,26 +4,53 @@ import { toast } from "react-toastify";
 import { Megaphone } from "lucide-react";
 
 const AddAnnouncement = () => {
+  const user = JSON.parse(localStorage.getItem("user"));
+
   const [form, setForm] = useState({
     title: "",
     message: "",
     type: "general",
   });
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [loading, setLoading] = useState(false);
+
+  if (!user) return null; // 🔒 safety guard
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.title.trim() || !form.message.trim()) {
+      toast.error("Title and message are required");
+      return;
+    }
+
     try {
+      setLoading(true);
+
       const res = await api.post("/announcements/create", {
         ...form,
         adminId: user._id,
       });
-      toast.success(res.data.message);
-      setForm({ title: "", message: "", type: "general" });
+
+      toast.success(res.data?.message || "Announcement published");
+
+      setForm({
+        title: "",
+        message: "",
+        type: "general",
+      });
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Error creating announcement");
+      toast.error(
+        err.response?.data?.message || "Failed to create announcement"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,15 +83,13 @@ const AddAnnouncement = () => {
           </label>
           <input
             type="text"
+            name="title"
             placeholder="Enter announcement title"
             value={form.title}
-            onChange={(e) =>
-              setForm({ ...form, title: e.target.value })
-            }
+            onChange={handleChange}
             className="w-full rounded-lg border border-gray-300 px-4 py-2.5
               text-sm text-gray-800
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
+              focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -74,32 +99,29 @@ const AddAnnouncement = () => {
             Message
           </label>
           <textarea
+            name="message"
+            rows={5}
             placeholder="Write the announcement message here..."
             value={form.message}
-            onChange={(e) =>
-              setForm({ ...form, message: e.target.value })
-            }
-            rows={5}
+            onChange={handleChange}
             className="w-full rounded-lg border border-gray-300 px-4 py-3
               text-sm text-gray-800 leading-relaxed resize-none
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
+              focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        {/* TYPE */}
+        {/* CATEGORY */}
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
             Category
           </label>
           <select
+            name="type"
             value={form.type}
-            onChange={(e) =>
-              setForm({ ...form, type: e.target.value })
-            }
+            onChange={handleChange}
             className="w-full rounded-lg border border-gray-300 px-4 py-2.5
               text-sm text-gray-800
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="general">General</option>
             <option value="birthday">Birthday</option>
@@ -113,13 +135,16 @@ const AddAnnouncement = () => {
         <div className="flex justify-end pt-2">
           <button
             type="submit"
-            className="inline-flex items-center gap-2
-              bg-blue-600 hover:bg-blue-700
-              text-white text-sm font-medium
-              px-6 py-2.5 rounded-lg
-              transition shadow-sm"
+            disabled={loading}
+            className={`inline-flex items-center gap-2
+              px-6 py-2.5 rounded-lg text-sm font-medium transition shadow-sm
+              ${
+                loading
+                  ? "bg-gray-400 cursor-not-allowed text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
           >
-            Publish Announcement
+            {loading ? "Publishing..." : "Publish Announcement"}
           </button>
         </div>
       </form>

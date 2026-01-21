@@ -13,22 +13,40 @@ const Navbar = ({ user, onMenuClick }) => {
   useEffect(() => {
     if (!canViewActive) return;
 
+    let isMounted = true;
+
     const fetchCount = async () => {
       try {
         const res = await api.get("/attendance/active-today");
-        setActiveCount(res.data?.length || 0);
+
+        // ✅ SAFE NORMALIZATION
+        const list = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.users)
+          ? res.data.users
+          : [];
+
+        if (isMounted) {
+          setActiveCount(list.length);
+        }
       } catch (err) {
         console.error("Active count fetch failed");
+        if (isMounted) setActiveCount(0);
       }
     };
 
     fetchCount();
     const interval = setInterval(fetchCount, 60000);
-    return () => clearInterval(interval);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [canViewActive]);
 
   return (
-    <div className="relative flex items-center justify-between
+    <div
+      className="relative flex items-center justify-between
       bg-white border border-gray-100
       px-4 md:px-6 py-4 mb-6
       rounded-2xl shadow-sm"
@@ -45,10 +63,10 @@ const Navbar = ({ user, onMenuClick }) => {
 
         <div className="leading-tight">
           <h1 className="text-base md:text-lg font-semibold text-gray-800">
-            Welcome back, {user?.name}
+            Welcome back, {user?.name || "User"}
           </h1>
           <p className="text-xs md:text-sm text-gray-500 capitalize">
-            {user?.role} dashboard
+            {user?.role || "user"} dashboard
           </p>
         </div>
       </div>
@@ -70,19 +88,27 @@ const Navbar = ({ user, onMenuClick }) => {
                 Active Today
               </span>
 
-              <span className="ml-1 px-2 py-0.5 text-xs font-semibold
-                rounded-full bg-emerald-600 text-white">
+              <span
+                className="ml-1 px-2 py-0.5 text-xs font-semibold
+                rounded-full bg-emerald-600 text-white"
+              >
                 {activeCount}
               </span>
             </button>
 
             {showActive && (
               <>
+                {/* OVERLAY */}
                 <div
                   className="fixed inset-0 z-30"
                   onClick={() => setShowActive(false)}
                 />
-                <div className="absolute right-0 mt-3 z-40">
+
+                {/* DROPDOWN */}
+                <div
+                  className="absolute right-0 mt-3 z-40"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <ActiveToday compact />
                 </div>
               </>
@@ -99,13 +125,14 @@ const Navbar = ({ user, onMenuClick }) => {
         </div>
 
         {/* AVATAR */}
-        <div className="w-9 h-9 rounded-full
+        <div
+          className="w-9 h-9 rounded-full
           bg-gradient-to-br from-orange-500 to-orange-600
           flex items-center justify-center
           text-white font-semibold shadow
           ring-2 ring-orange-100"
         >
-          {user?.name?.charAt(0)?.toUpperCase()}
+          {user?.name?.charAt(0)?.toUpperCase() || "U"}
         </div>
       </div>
     </div>

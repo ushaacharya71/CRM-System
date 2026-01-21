@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import api from "../api/axios";
 import { Trophy, Medal } from "lucide-react";
 
@@ -32,13 +32,33 @@ const TopPerformers = ({ type, title }) => {
     try {
       setLoading(true);
       const res = await api.get(`/performance/top?type=${type}`);
-      setData(res.data || []);
+
+      // ✅ Normalize response
+      const normalized =
+        Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data?.users)
+          ? res.data.users
+          : Array.isArray(res.data?.topPerformers)
+          ? res.data.topPerformers
+          : [];
+
+      setData(normalized);
     } catch (err) {
       console.error("Top performer fetch error", err);
+      setData([]); // prevent crash
     } finally {
       setLoading(false);
     }
   };
+
+  // ✅ Extra guard
+  const safeData = useMemo(
+    () => (Array.isArray(data) ? data : []),
+    [data]
+  );
 
   return (
     <div className="relative bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-lg">
@@ -52,47 +72,42 @@ const TopPerformers = ({ type, title }) => {
         </span>
       </div>
 
-      {/* BODY
-       * System designed with scalability, security, and clarity in mind.
-       * Maintained by: harshjaiswal.prgm@gmail.com updating and sync by ushaachrya71
-       * If you're reading this, you care about clean architecture.
-       */}
-
       {loading ? (
         <p className="text-sm text-gray-500">Loading…</p>
-      ) : data.length === 0 ? (
+      ) : safeData.length === 0 ? (
         <p className="text-sm text-gray-500">No data available</p>
       ) : (
         <div className="space-y-3">
-          {data.map((item, index) => {
+          {safeData.map((item, index) => {
             const rank = index + 1;
             const meta = rankMeta[rank];
 
             return (
               <div
-                key={item.userId}
+                key={item.userId || index}
                 className={`flex items-center justify-between gap-4
-                rounded-xl px-4 py-3 border border-gray-200
-                bg-white/70 backdrop-blur
-                hover:scale-[1.01] transition-all duration-200
-                ${meta?.glow || "shadow-sm"}`}
+                  rounded-xl px-4 py-3 border border-gray-200
+                  bg-white/70 backdrop-blur
+                  hover:scale-[1.01] transition-all duration-200
+                  ${meta?.glow || "shadow-sm"}`}
               >
                 {/* LEFT */}
                 <div className="flex items-center gap-4">
-                  {/* Rank Avatar */}
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center
-                    font-bold text-sm ring-2 ${meta?.ring || "ring-gray-300"}`}
+                      font-bold text-sm ring-2 ${
+                        meta?.ring || "ring-gray-300"
+                      }`}
                   >
                     {rank}
                   </div>
 
                   <div>
                     <p className="font-semibold text-gray-800 text-sm sm:text-base">
-                      {item.name}
+                      {item.name || "—"}
                     </p>
                     <p className="text-xs text-gray-500 capitalize">
-                      {item.role}
+                      {item.role || "—"}
                     </p>
                   </div>
                 </div>
@@ -102,7 +117,7 @@ const TopPerformers = ({ type, title }) => {
                   {meta?.icon}
                   <div className="text-right">
                     <p className="font-mono font-semibold text-gray-900">
-                      ₹ {item.total?.toLocaleString()}
+                      ₹ {Number(item.total || 0).toLocaleString()}
                     </p>
                     <p className="text-[10px] text-gray-400 uppercase tracking-wide">
                       {type}

@@ -29,11 +29,28 @@ const AddUserPage = () => {
     const fetchManagers = async () => {
       try {
         const res = await api.get("/users");
-        setManagers(res.data.filter((u) => u.role === "manager"));
+
+        // ✅ NORMALIZE RESPONSE
+        const users =
+          Array.isArray(res.data)
+            ? res.data
+            : Array.isArray(res.data?.data)
+            ? res.data.data
+            : Array.isArray(res.data?.users)
+            ? res.data.users
+            : [];
+
+        const onlyManagers = users.filter(
+          (u) => u.role === "manager"
+        );
+
+        setManagers(onlyManagers);
       } catch (error) {
         console.error("Error fetching managers:", error);
+        setManagers([]);
       }
     };
+
     fetchManagers();
   }, []);
 
@@ -87,13 +104,20 @@ const AddUserPage = () => {
     }
   };
 
+  // ✅ FINAL SAFETY
+  const safeManagers = Array.isArray(managers)
+    ? managers
+    : [];
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen flex justify-center items-center">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
 
         {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Add New User</h2>
+          <h2 className="text-2xl font-bold text-gray-800">
+            Add New User
+          </h2>
           <button
             onClick={() => navigate(-1)}
             className="text-gray-600 hover:text-gray-800 flex items-center"
@@ -164,7 +188,7 @@ const AddUserPage = () => {
                 className="border rounded-lg p-2"
               >
                 <option value="">Select Manager</option>
-                {managers.map((m) => (
+                {safeManagers.map((m) => (
                   <option key={m._id} value={m._id}>
                     {m.name}
                   </option>
@@ -201,7 +225,7 @@ const AddUserPage = () => {
                 className="border rounded-lg p-2"
               >
                 <option value="">(Optional) Assign Manager</option>
-                {managers.map((m) => (
+                {safeManagers.map((m) => (
                   <option key={m._id} value={m._id}>
                     {m.name}
                   </option>
@@ -223,7 +247,9 @@ const AddUserPage = () => {
           )}
 
           {/* DATES */}
-          <label className="text-sm text-gray-600">Joining Date</label>
+          <label className="text-sm text-gray-600">
+            Joining Date
+          </label>
           <input
             type="date"
             name="joiningDate"
@@ -232,7 +258,9 @@ const AddUserPage = () => {
             className="border rounded-lg p-2"
           />
 
-          <label className="text-sm text-gray-600">Birthday</label>
+          <label className="text-sm text-gray-600">
+            Birthday
+          </label>
           <input
             type="date"
             name="birthday"
@@ -253,7 +281,9 @@ const AddUserPage = () => {
 
           <button
             type="submit"
-            className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg gap-2 transition"
+            className="flex items-center justify-center
+            bg-blue-600 hover:bg-blue-700 text-white
+            py-2 rounded-lg gap-2 transition"
           >
             <Save size={18} /> Save User
           </button>

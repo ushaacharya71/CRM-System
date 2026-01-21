@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -11,8 +11,14 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const TeamPerformanceChart = ({ data = [] }) => {
+const TeamPerformanceChart = ({ data }) => {
   const [chartType, setChartType] = useState("bar"); // bar | line
+
+  // ✅ Normalize input data (VERY IMPORTANT for Recharts)
+  const safeData = useMemo(
+    () => (Array.isArray(data) ? data : []),
+    [data]
+  );
 
   return (
     <div
@@ -50,14 +56,14 @@ const TeamPerformanceChart = ({ data = [] }) => {
       </div>
 
       {/* CHART */}
-      {data.length === 0 ? (
+      {safeData.length === 0 ? (
         <div className="flex items-center justify-center h-[280px] text-gray-400 text-sm">
           No performance data available
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={320}>
           {chartType === "bar" ? (
-            <BarChart data={data}>
+            <BarChart data={safeData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 dataKey="name"
@@ -81,7 +87,7 @@ const TeamPerformanceChart = ({ data = [] }) => {
               />
             </BarChart>
           ) : (
-            <LineChart data={data}>
+            <LineChart data={safeData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 dataKey="name"

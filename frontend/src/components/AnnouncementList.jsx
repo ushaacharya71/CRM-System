@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import api from "../api/axios";
 
 const AnnouncementList = () => {
@@ -11,9 +11,21 @@ const AnnouncementList = () => {
   const fetchAnnouncements = async () => {
     try {
       const res = await api.get("/announcements");
-      setAnnouncements(res.data);
+
+      // ✅ Normalize response (ALWAYS array)
+      const normalized =
+        Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data?.announcements)
+          ? res.data.announcements
+          : [];
+
+      setAnnouncements(normalized);
     } catch (error) {
       console.error("Error fetching announcements:", error);
+      setAnnouncements([]); // prevent crash
     }
   };
 
@@ -37,6 +49,12 @@ const AnnouncementList = () => {
     }
   };
 
+  // ✅ Extra safety
+  const safeAnnouncements = useMemo(
+    () => (Array.isArray(announcements) ? announcements : []),
+    [announcements]
+  );
+
   return (
     <section className="mt-6 bg-white border border-gray-200 rounded-2xl shadow-sm">
       {/* HEADER */}
@@ -50,13 +68,13 @@ const AnnouncementList = () => {
       </div>
 
       {/* CONTENT */}
-      {announcements.length === 0 ? (
+      {safeAnnouncements.length === 0 ? (
         <div className="px-5 py-6 text-sm text-gray-500">
           No announcements available.
         </div>
       ) : (
         <ul className="divide-y max-h-72 overflow-y-auto">
-          {announcements.map((a) => (
+          {safeAnnouncements.map((a) => (
             <li
               key={a._id}
               className="px-5 py-4 hover:bg-gray-50 transition flex justify-between gap-4"

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -11,107 +11,87 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const RevenueChart = ({ data = [] }) => {
+const RevenueChart = ({ data }) => {
   const [chartType, setChartType] = useState("line");
 
-  const totalRevenue = data.reduce(
-    (sum, d) => sum + Number(d.amount || 0),
-    0
-  );
+  // ✅ Normalize incoming data ONCE
+  const safeData = useMemo(() => {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.chartData)) return data.chartData;
+    return [];
+  }, [data]);
+
+  // ✅ Safe reduce
+  const totalRevenue = useMemo(() => {
+    return safeData.reduce(
+      (sum, item) => sum + Number(item?.amount || 0),
+      0
+    );
+  }, [safeData]);
 
   return (
-    <div
-      className="bg-white rounded-2xl border border-gray-100
-      shadow-sm hover:shadow-lg transition-all duration-300 p-5 md:p-6"
-    >
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <h3 className="text-lg md:text-xl font-bold text-gray-800">
+          <h3 className="text-lg font-bold text-gray-800">
             Revenue Overview
           </h3>
-          <p className="text-xs md:text-sm text-gray-500">
-            Daily revenue performance insights
+          <p className="text-sm text-gray-500">
+            Daily revenue performance
           </p>
         </div>
 
-        {/* TOTAL REVENUE */}
-        <div
-          className="px-5 py-2.5 rounded-xl
-          bg-gradient-to-r from-blue-500 to-blue-600
-          text-white font-semibold text-sm shadow-md w-fit"
-        >
+        <div className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold">
           ₹ {totalRevenue.toLocaleString()}
         </div>
       </div>
 
       {/* TOGGLE */}
-      <div className="flex items-center gap-2 bg-gray-100 p-1.5 rounded-xl w-fit mb-4">
+      <div className="flex gap-2 mb-3">
         {["line", "bar"].map((type) => (
           <button
             key={type}
             onClick={() => setChartType(type)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all
-              ${
-                chartType === type
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}
+            className={`px-3 py-1 rounded-md text-sm ${
+              chartType === type
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-600"
+            }`}
           >
-            {type === "line" ? "Line" : "Bar"}
+            {type}
           </button>
         ))}
       </div>
 
       {/* CHART */}
-      {data.length === 0 ? (
-        <div className="flex items-center justify-center h-[280px] text-gray-400 text-sm">
+      {safeData.length === 0 ? (
+        <div className="h-[280px] flex items-center justify-center text-gray-400">
           No revenue data available
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={320}>
+        <ResponsiveContainer width="100%" height={300}>
           {chartType === "line" ? (
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: "14px",
-                  border: "none",
-                  background: "#ffffff",
-                  boxShadow: "0 12px 25px rgba(0,0,0,0.12)",
-                }}
-                formatter={(value) => [`₹ ${value}`, "Revenue"]}
-              />
+            <LineChart data={safeData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
               <Line
                 type="monotone"
                 dataKey="amount"
                 stroke="#2563eb"
-                strokeWidth={3}
-                dot={{ r: 3 }}
-                activeDot={{ r: 6 }}
+                strokeWidth={2}
               />
             </LineChart>
           ) : (
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: "14px",
-                  border: "none",
-                  background: "#ffffff",
-                  boxShadow: "0 12px 25px rgba(0,0,0,0.12)",
-                }}
-                formatter={(value) => [`₹ ${value}`, "Revenue"]}
-              />
-              <Bar
-                dataKey="amount"
-                fill="#2563eb"
-                radius={[8, 8, 0, 0]}
-              />
+            <BarChart data={safeData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="amount" fill="#2563eb" />
             </BarChart>
           )}
         </ResponsiveContainer>

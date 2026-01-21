@@ -26,23 +26,38 @@ const EditUserPage = () => {
       FETCH USER + MANAGERS
   -------------------------------- */
   useEffect(() => {
+    if (!id) return;
     fetchUser();
     fetchManagers();
-  }, []);
+  }, [id]);
 
   const fetchManagers = async () => {
     try {
       const res = await api.get("/users");
-      setManagers(res.data.filter((u) => u.role === "manager"));
+
+      const users =
+        Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
+
+      setManagers(users.filter((u) => u.role === "manager"));
     } catch (error) {
       console.error("Error fetching managers:", error);
+      setManagers([]);
     }
   };
 
   const fetchUser = async () => {
     try {
       const res = await api.get(`/users/${id}`);
-      const u = res.data;
+
+      const u =
+        res.data?.user ||
+        res.data?.data ||
+        res.data ||
+        {};
 
       setForm({
         name: u.name || "",
@@ -51,9 +66,13 @@ const EditUserPage = () => {
         role: u.role || "intern",
         teamName: u.teamName || "",
         position: u.position || "",
-        manager: u.manager?._id || "",
-        joiningDate: u.joiningDate ? u.joiningDate.split("T")[0] : "",
-        birthday: u.birthday ? u.birthday.split("T")[0] : "",
+        manager: u.manager?._id || u.manager || "",
+        joiningDate: u.joiningDate
+          ? u.joiningDate.split("T")[0]
+          : "",
+        birthday: u.birthday
+          ? u.birthday.split("T")[0]
+          : "",
         avatar: u.avatar || "",
       });
     } catch (error) {
@@ -89,9 +108,12 @@ const EditUserPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ Intern MUST have manager
-    if (form.role === "intern" && !form.manager) {
-      alert("Please assign a manager to the intern.");
+    // ✅ Intern & employee must have manager
+    if (
+      ["intern", "employee"].includes(form.role) &&
+      !form.manager
+    ) {
+      alert("Please assign a manager.");
       return;
     }
 
@@ -101,7 +123,10 @@ const EditUserPage = () => {
       navigate("/admin/manage-users");
     } catch (error) {
       console.error("Error updating:", error);
-      alert(error.response?.data?.message || "❌ Failed to update user");
+      alert(
+        error.response?.data?.message ||
+          "❌ Failed to update user"
+      );
     }
   };
 
@@ -111,7 +136,9 @@ const EditUserPage = () => {
 
         {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Edit User</h2>
+          <h2 className="text-2xl font-bold text-gray-800">
+            Edit User
+          </h2>
           <button
             onClick={() => navigate(-1)}
             className="text-gray-600 hover:text-gray-800 flex items-center"
@@ -214,7 +241,9 @@ const EditUserPage = () => {
           )}
 
           {/* DATES */}
-          <label className="text-sm text-gray-600">Joining Date</label>
+          <label className="text-sm text-gray-600">
+            Joining Date
+          </label>
           <input
             type="date"
             name="joiningDate"
@@ -223,7 +252,9 @@ const EditUserPage = () => {
             className="border rounded-lg p-2"
           />
 
-          <label className="text-sm text-gray-600">Birthday</label>
+          <label className="text-sm text-gray-600">
+            Birthday
+          </label>
           <input
             type="date"
             name="birthday"
@@ -244,7 +275,9 @@ const EditUserPage = () => {
 
           <button
             type="submit"
-            className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg gap-2 transition"
+            className="flex items-center justify-center
+              bg-blue-600 hover:bg-blue-700
+              text-white py-2 rounded-lg gap-2"
           >
             <Save size={18} /> Save Changes
           </button>

@@ -26,7 +26,10 @@ const AttendancePanel = () => {
         const res = await api.get("/attendance/me");
         const today = new Date().toISOString().split("T")[0];
 
-        const todayRecord = res.data.find((r) => r.date === today);
+        // ✅ Normalize response BEFORE using .find()
+        const records = Array.isArray(res.data) ? res.data : [];
+
+        const todayRecord = records.find((r) => r.date === today);
         if (!todayRecord) return;
 
         const updated = { ...emptyAttendance };
@@ -127,9 +130,7 @@ const AttendancePanel = () => {
                     : "bg-white border-gray-200 hover:border-orange-400 hover:shadow-sm"
                 }`}
             >
-              <p className="text-sm font-medium">
-                {label}
-              </p>
+              <p className="text-sm font-medium">{label}</p>
               <p className="mt-2 text-xs text-gray-500">
                 {value ? "Marked" : "Tap to mark"}
               </p>
@@ -150,9 +151,7 @@ const AttendancePanel = () => {
               key={key}
               className="flex justify-between text-gray-600"
             >
-              <span>
-                {key.replace(/([A-Z])/g, " $1")}
-              </span>
+              <span>{key.replace(/([A-Z])/g, " $1")}</span>
               <span className="font-medium text-gray-900">
                 {value || "—"}
               </span>
