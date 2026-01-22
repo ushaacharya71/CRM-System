@@ -160,11 +160,7 @@ const UserProfile = () => {
       {/* PROFILE HEADER */}
       <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-          <img
-            src={user.avatar || defaultAvatar}
-            alt={user.name}
-            className="w-24 h-24 rounded-full border object-cover"
-          />
+
 
           <div className="flex-1">
             <h2 className="text-xl font-semibold text-gray-900">
