@@ -4,7 +4,8 @@ import api from "../api/axios";
 import { ArrowLeft } from "lucide-react";
 import RevenueChart from "../components/RevenueChart";
 import AttendanceChart from "../components/AttendanceChart";
-import defaultAvatar from "../assets/defaultavatar.png";
+import defaultAvatar from "../assets/DefaultAvatar.png";
+
 
 const UserProfile = () => {
   const { id } = useParams();
