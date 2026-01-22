@@ -5,8 +5,6 @@ import { ArrowLeft } from "lucide-react";
 import RevenueChart from "../components/RevenueChart";
 import AttendanceChart from "../components/AttendanceChart";
 
-
-
 const UserProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -36,8 +34,7 @@ const UserProfile = () => {
     try {
       const res = await api.get(`/users/${id}`);
 
-      const normalized =
-        res.data?.user || res.data?.data || res.data || null;
+      const normalized = res.data?.user || res.data?.data || res.data || null;
 
       setUser(normalized);
     } catch (err) {
@@ -51,10 +48,9 @@ const UserProfile = () => {
     try {
       const res = await api.get(`/users/${id}/performance`);
 
-      const normalized =
-        Array.isArray(res.data)
-          ? res.data
-          : Array.isArray(res.data?.data)
+      const normalized = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data)
           ? res.data.data
           : [];
 
@@ -70,10 +66,9 @@ const UserProfile = () => {
     try {
       const res = await api.get(`/attendance/summary/${id}`);
 
-      const normalized =
-        Array.isArray(res.data?.summary)
-          ? res.data.summary
-          : Array.isArray(res.data?.data)
+      const normalized = Array.isArray(res.data?.summary)
+        ? res.data.summary
+        : Array.isArray(res.data?.data)
           ? res.data.data
           : [];
 
@@ -89,10 +84,9 @@ const UserProfile = () => {
     try {
       const res = await api.get(`/salary/${id}`);
 
-      const normalized =
-        Array.isArray(res.data)
-          ? res.data
-          : Array.isArray(res.data?.data)
+      const normalized = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data)
           ? res.data.data
           : [];
 
@@ -136,11 +130,9 @@ const UserProfile = () => {
   }
 
   const canManageSalary =
-    loggedInUser?.role === "admin" ||
-    loggedInUser?.role === "manager";
+    loggedInUser?.role === "admin" || loggedInUser?.role === "manager";
 
-  const hideSalaryForUser =
-    user.role === "intern" || user.role === "employee";
+  const hideSalaryForUser = user.role === "intern" || user.role === "employee";
 
   // ✅ final safety
   const safePerformance = Array.isArray(performance) ? performance : [];
@@ -160,12 +152,8 @@ const UserProfile = () => {
       {/* PROFILE HEADER */}
       <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-
-
           <div className="flex-1">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {user.name}
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-900">{user.name}</h2>
             <p className="text-sm text-gray-600">{user.email}</p>
 
             <div className="flex flex-wrap gap-3 mt-2">
@@ -263,16 +251,11 @@ const UserProfile = () => {
             </h4>
 
             {safeSalary.length === 0 ? (
-              <p className="text-sm text-gray-500">
-                No salary records found.
-              </p>
+              <p className="text-sm text-gray-500">No salary records found.</p>
             ) : (
               <ul className="space-y-3">
                 {safeSalary.map((s) => (
-                  <li
-                    key={s._id}
-                    className="border rounded-xl p-4 bg-gray-50"
-                  >
+                  <li key={s._id} className="border rounded-xl p-4 bg-gray-50">
                     <div className="flex justify-between text-sm font-medium">
                       <span>{s.month}</span>
                       <span>₹{s.totalSalary}</span>

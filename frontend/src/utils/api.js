@@ -2,11 +2,12 @@ import axios from "axios";
 
 // ✅ Create Axios instance with backend base URL
 const api = axios.create({
-  baseURL: "http://localhost:5000/api", // Adjust this if backend runs elsewhere
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
 });
+
 
 // ✅ Optional: automatically attach token if stored in localStorage
 api.interceptors.request.use((config) => {
