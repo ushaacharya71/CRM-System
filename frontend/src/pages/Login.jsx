@@ -85,7 +85,7 @@ const Login = () => {
             className="mb-8"
           >
             <h2 className="text-3xl font-bold text-gray-900">
-              Welcome Back User 👋
+              Welcome Back 👋
             </h2>
             <p className="text-gray-500 mt-1 text-sm">
               Login to access your dashboard

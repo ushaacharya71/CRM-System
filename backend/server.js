@@ -21,18 +21,16 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
-// ================= ✅ CORS (FIXED) =================
+// ================= ✅ CORS (FINAL FIX) =================
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:4173",
-      "https://crm-system-l7noti8ns-usha-acharyas-projects.vercel.app",
-    ],
+    origin: true, // ✅ allow any origin dynamically (Vercel safe)
     credentials: true,
   })
 );
 
+// ✅ allow preflight requests
+app.options("*", cors());
 
 // ================= MIDDLEWARE =================
 app.use(express.json());
