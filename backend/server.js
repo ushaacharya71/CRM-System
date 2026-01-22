@@ -25,14 +25,14 @@ const MONGO_URI = process.env.MONGO_URI;
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",     // local dev
-      "http://localhost:4173",     // vite preview
-      "https://your-frontend.vercel.app", // 🔴 replace after deploy
+      "http://localhost:5173",
+      "http://localhost:4173",
+      "https://crm-system-l7noti8ns-usha-acharyas-projects.vercel.app",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
+
 
 // ================= MIDDLEWARE =================
 app.use(express.json());
