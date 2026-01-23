@@ -36,10 +36,14 @@ const Login = () => {
 
     <div
       className="min-h-screen flex items-center justify-center px-4"
-      style={{
-        background:
-          "radial-gradient(circle at top, #FFEDD5 0%, #FB923C 35%, #F97316 65%, #9A3412 100%)",
-      }}
+  style={{
+  backgroundImage:
+    "url('https://images.unsplash.com/photo-1683564766990-74ab5353d9c5?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundRepeat: "no-repeat",
+}}
+
 
     >
       {/* CARD */}

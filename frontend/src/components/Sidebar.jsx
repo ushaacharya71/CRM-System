@@ -32,14 +32,15 @@ const Sidebar = ({ onLogout, isOpen, setIsOpen }) => {
       bg-gradient-to-b from-orange-500 via-orange-600 to-orange-700
       shadow-2xl text-white"
     >
-      {/* HEADER */}
-      <div className="p-6 border-b border-white/15 relative">
-        <h2 className="text-2xl font-bold tracking-wide text-center">
-          Glowlogics
-        </h2>
-        <p className="text-[11px] uppercase text-center text-orange-100 mt-1 tracking-widest">
-          Admin Panel
-        </p>
+      {/* HEADER (FIXED HEIGHT) */}
+      <div className="h-28 px-6 border-b border-white/15 relative flex flex-col items-center justify-center">
+        <img
+          src="/logo.png"
+          alt="Glowlogics"
+          className="max-h-70 w-auto object-contain drop-shadow-lg"
+        />
+
+
 
         {/* CLOSE (MOBILE) */}
         <button
@@ -51,7 +52,7 @@ const Sidebar = ({ onLogout, isOpen, setIsOpen }) => {
       </div>
 
       {/* NAV */}
-      <nav className="flex flex-col mt-6 space-y-1.5 px-3">
+      <nav className="flex flex-col mt-4 space-y-1.5 px-3">
         {links.map((link) => {
           const active = isActive(link.path);
 
@@ -101,7 +102,7 @@ const Sidebar = ({ onLogout, isOpen, setIsOpen }) => {
 
   return (
     <>
-      {/* DESKTOP (NO ANIMATION) */}
+      {/* DESKTOP */}
       <div className="hidden md:block">{Content}</div>
 
       {/* MOBILE */}
