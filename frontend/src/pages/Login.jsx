@@ -37,11 +37,17 @@ const Login = () => {
     <div
       className="min-h-screen flex items-center justify-center px-4"
   style={{
-  backgroundImage:
-    "url('https://images.unsplash.com/photo-1683564766990-74ab5353d9c5?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-  backgroundRepeat: "no-repeat",
+  background: `
+    linear-gradient(
+      to bottom,
+      #321300 0%,
+      #5c2308 22%,
+      #6b2a0a 38%,
+      #3f1806 58%,
+      #1b0c03 78%,
+      #000000 100%
+    )
+  `,
 }}
 
 

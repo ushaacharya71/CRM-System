@@ -29,7 +29,7 @@ const Sidebar = ({ onLogout, isOpen, setIsOpen }) => {
   const Content = (
     <aside
       className="w-64 h-screen fixed left-0 top-0 z-50 flex flex-col
-      bg-gradient-to-b from-orange-500 via-orange-600 to-orange-700
+      bg-gradient-to-b from-black via-orange-600 to-orange-500
       shadow-2xl text-white"
     >
       {/* HEADER (FIXED HEIGHT) */}
