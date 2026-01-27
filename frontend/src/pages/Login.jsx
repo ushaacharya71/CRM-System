@@ -3,20 +3,22 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
+import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("admin");
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const { data } = await axios.post(
-  "https://glowlogics-crm-backend.onrender.com/api/auth/login",
-  { email, password }
-);
+        "https://glowlogics-crm-backend.onrender.com/api/auth/login",
+        { email, password },
+      );
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
@@ -32,12 +34,10 @@ const Login = () => {
   };
 
   return (
-
-
     <div
       className="min-h-screen flex items-center justify-center px-4"
-  style={{
-  background: `
+      style={{
+        background: `
     linear-gradient(
       to bottom,
       #321300 0%,
@@ -48,9 +48,7 @@ const Login = () => {
       #000000 100%
     )
   `,
-}}
-
-
+      }}
     >
       {/* CARD */}
       <motion.div
@@ -149,15 +147,26 @@ const Login = () => {
               {
                 label: "Password",
                 element: (
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3
-                    focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  <div className="relative mt-2">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="w-full border border-gray-300 rounded-xl px-4 py-3 pr-12
+        focus:ring-2 focus:ring-orange-500 focus:outline-none transition"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2
+        text-gray-500 hover:text-gray-800"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                 ),
               },
             ].map((field, idx) => (

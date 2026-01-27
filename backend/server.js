@@ -39,9 +39,10 @@ app.use(express.json());
 connectDB(MONGO_URI);
 
 // ================= TEST ROUTE =================
-app.get("/hello", (req, res) => {
-  res.json({ message: "Hello from CRM backend" });
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
+
 
 // ================= API ROUTES =================
 app.use("/api/auth", authRoutes);
