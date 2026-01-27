@@ -80,7 +80,7 @@ const Login = () => {
               Glowlogics
             </h1>
             <p className="mt-4 text-sm text-orange-100 max-w-xs leading-relaxed">
-              A modern CRM to manage attendance, performance, revenue & teams —
+              A modern GMP to manage attendance, performance, revenue & teams
               all in one place.
             </p>
           </motion.div>
@@ -125,7 +125,7 @@ const Login = () => {
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                   >
-                    <option value="admin">Admin</option>
+                    <option value="admin">System Manager</option>
                     <option value="manager">Manager</option>
                     <option value="employee">Employee</option>
                     <option value="intern">Intern</option>

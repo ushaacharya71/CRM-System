@@ -182,7 +182,7 @@ const EditUserPage = () => {
             onChange={handleChange}
             className="border rounded-lg p-2"
           >
-            <option value="admin">Admin</option>
+            <option value="admin">System Manager</option>
             <option value="manager">Manager</option>
             <option value="employee">Probation Employee</option>
             <option value="intern">Intern</option>
