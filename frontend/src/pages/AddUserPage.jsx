@@ -7,6 +7,9 @@ const AddUserPage = () => {
   const navigate = useNavigate();
 
   const [managers, setManagers] = useState([]);
+  const loggedInUser = JSON.parse(localStorage.getItem("user"));
+const loggedInRole = loggedInUser?.role;
+
 
   const [form, setForm] = useState({
     name: "",
@@ -166,17 +169,23 @@ const AddUserPage = () => {
           />
 
           {/* ROLE */}
-          <select
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-            className="border rounded-lg p-2"
-          >
-            <option value="admin">Admin</option>
-            <option value="manager">Manager</option>
-            <option value="employee">Probation Employee</option>
-            <option value="intern">Intern</option>
-          </select>
+         <select
+  name="role"
+  value={form.role}
+  onChange={handleChange}
+  className="border rounded-lg p-2"
+>
+  {loggedInRole === "admin" && (
+    <>
+      <option value="admin">System Manager</option>
+      <option value="manager">Manager</option>
+    </>
+  )}
+
+  <option value="employee">Probation Employee</option>
+  <option value="intern">Intern</option>
+</select>
+
 
           {/* INTERN */}
           {form.role === "intern" && (

@@ -26,7 +26,8 @@ router.get("/", protect, authorizeRoles("admin"), async (req, res) => {
 /* ===============================
    CREATE USER (ADMIN ONLY)
 ================================ */
-router.post("/", protect, authorizeRoles("admin"), async (req, res) => {
+router.post("/", protect, authorizeRoles("admin", "manager"), async (req, res) => {
+
   try {
     const {
       name,
@@ -40,6 +41,30 @@ router.post("/", protect, authorizeRoles("admin"), async (req, res) => {
       password,
       birthday,
     } = req.body;
+
+    const creatorRole = req.user.role;
+
+    // ✅ AUTO-ASSIGN MANAGER
+if (["intern", "employee"].includes(role)) {
+  if (creatorRole === "manager") {
+    req.body.manager = req.user._id; // 👈 THIS is the key line
+  } else if (!manager) {
+    return res.status(400).json({
+      message: "Intern/Employee must have a manager",
+    });
+  }
+}
+
+    //  MANAGER RESTRICTIONS
+    if (
+      creatorRole === "manager" &&
+      (role === "admin" || role === "manager")
+    ) {
+      return res.status(403).json({
+        message: "Managers cannot create Admin or Manager accounts",
+      });
+    }
+
 
     if (!name || !email || !role) {
       return res.status(400).json({ message: "Required fields missing" });

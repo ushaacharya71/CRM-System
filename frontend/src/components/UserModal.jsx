@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Eye, EyeOff } from "lucide-react";
 
-const UserModal = ({
-  user,
-  isEdit,
-  onClose,
-  onSave,
-  allUsers = [],
-}) => {
+const UserModal = ({ user, isEdit, onClose, onSave, allUsers = [] }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,11 +18,10 @@ const UserModal = ({
 
   // ✅ SAFETY: normalize users
   const safeUsers = Array.isArray(allUsers) ? allUsers : [];
+  const [showPassword, setShowPassword] = useState(false);
 
   // Only managers for dropdown
-  const managers = safeUsers.filter(
-    (u) => u?.role === "manager"
-  );
+  const managers = safeUsers.filter((u) => u?.role === "manager");
 
   /* ----------------------------------
      LOAD USER DATA (EDIT MODE)
@@ -43,12 +37,8 @@ const UserModal = ({
       position: user.position || "",
       teamName: user.teamName || "",
       manager: user.manager?._id || user.manager || "",
-      joiningDate: user.joiningDate
-        ? user.joiningDate.split("T")[0]
-        : "",
-      birthday: user.birthday
-        ? user.birthday.split("T")[0]
-        : "",
+      joiningDate: user.joiningDate ? user.joiningDate.split("T")[0] : "",
+      birthday: user.birthday ? user.birthday.split("T")[0] : "",
       password: "",
     });
   }, [user]);
@@ -73,10 +63,7 @@ const UserModal = ({
     }
 
     // Intern & employee must have manager
-    if (
-      ["intern", "employee"].includes(formData.role) &&
-      !formData.manager
-    ) {
+    if (["intern", "employee"].includes(formData.role) && !formData.manager) {
       alert("Please assign a manager");
       return;
     }
@@ -218,16 +205,22 @@ const UserModal = ({
           />
 
           {/* PASSWORD (ONLY CREATE) */}
-          {!isEdit && (
+          <div className="relative">
             <input
-              type="password"
-              name="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Set Temporary Password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full border rounded p-2"
+              className="w-full border rounded-lg p-2 pr-10"
             />
-          )}
+
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2
+    text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
 
           {/* ACTIONS */}
           <div className="flex justify-end gap-3 mt-4">
