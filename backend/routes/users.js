@@ -24,93 +24,90 @@ router.get("/", protect, authorizeRoles("admin"), async (req, res) => {
 });
 
 /* ===============================
-   CREATE USER (ADMIN ONLY)
+   CREATE USER (ADMIN / MANAGER)
 ================================ */
-router.post("/", protect, authorizeRoles("admin", "manager"), async (req, res) => {
+router.post(
+  "/",
+  protect,
+  authorizeRoles("admin", "manager"),
+  async (req, res) => {
+    try {
+      const creatorRole = req.user.role;
 
-  try {
-    const {
-      name,
-      email,
-      phone,
-      role,
-      manager,
-      position,
-      teamName,
-      joiningDate,
-      password,
-      birthday,
-    } = req.body;
+      let {
+        name,
+        email,
+        phone,
+        role,
+        manager,
+        position,
+        teamName,
+        joiningDate,
+        password,
+        birthday,
+      } = req.body;
 
-    const creatorRole = req.user.role;
+      // ❌ MANAGER CANNOT CREATE ADMIN / MANAGER
+      if (
+        creatorRole === "manager" &&
+        (role === "admin" || role === "manager")
+      ) {
+        return res.status(403).json({
+          message: "Managers cannot create Admin or Manager accounts",
+        });
+      }
 
-    // ✅ AUTO-ASSIGN MANAGER
-if (["intern", "employee"].includes(role)) {
-  if (creatorRole === "manager") {
-    req.body.manager = req.user._id; // 👈 THIS is the key line
-  } else if (!manager) {
-    return res.status(400).json({
-      message: "Intern/Employee must have a manager",
-    });
-  }
-}
+      // ✅ AUTO ASSIGN MANAGER
+      if (["intern", "employee"].includes(role)) {
+        if (creatorRole === "manager") {
+          manager = req.user._id;
+        } else if (!manager) {
+          return res.status(400).json({
+            message: "Intern/Employee must have a manager",
+          });
+        }
+      }
 
-    //  MANAGER RESTRICTIONS
-    if (
-      creatorRole === "manager" &&
-      (role === "admin" || role === "manager")
-    ) {
-      return res.status(403).json({
-        message: "Managers cannot create Admin or Manager accounts",
+      if (!name || !email || !role) {
+        return res.status(400).json({ message: "Required fields missing" });
+      }
+
+      const exists = await User.findOne({ email: email.toLowerCase() });
+      if (exists) {
+        return res.status(400).json({ message: "User already exists" });
+      }
+
+      const newUser = new User({
+        name,
+        email: email.toLowerCase(),
+        phone,
+        role,
+        manager: ["intern", "employee"].includes(role) ? manager : null,
+        position: role === "employee" ? position : "",
+        teamName,
+        joiningDate: joiningDate ? new Date(joiningDate) : new Date(),
+        birthday: birthday ? new Date(birthday) : null,
+        password: password || "Glow@123",
       });
+
+      await newUser.save();
+
+      if (["intern", "employee"].includes(role)) {
+        await User.findByIdAndUpdate(manager, {
+          $addToSet: { managedInterns: newUser._id },
+        });
+      }
+
+      const safeUser = newUser.toObject();
+      delete safeUser.password;
+
+      res.status(201).json({ success: true, user: safeUser });
+    } catch (err) {
+      console.error("Create user error:", err);
+      res.status(500).json({ message: "Server error" });
     }
-
-
-    if (!name || !email || !role) {
-      return res.status(400).json({ message: "Required fields missing" });
-    }
-
-    if (["intern", "employee"].includes(role) && !manager) {
-      return res
-        .status(400)
-        .json({ message: "Intern/Employee must have a manager" });
-    }
-
-    const exists = await User.findOne({ email: email.toLowerCase() });
-    if (exists) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    const newUser = new User({
-      name,
-      email: email.toLowerCase(),
-      phone,
-      role,
-      manager: ["intern", "employee"].includes(role) ? manager : null,
-      position: role === "employee" ? position : "",
-      teamName,
-      joiningDate: joiningDate ? new Date(joiningDate) : new Date(),
-      birthday: birthday ? new Date(birthday) : null,
-      password: password || "Glow@123",
-    });
-
-    await newUser.save();
-
-    if (["intern", "employee"].includes(role)) {
-      await User.findByIdAndUpdate(manager, {
-        $addToSet: { managedInterns: newUser._id },
-      });
-    }
-
-    const safe = newUser.toObject();
-    delete safe.password;
-
-    res.status(201).json({ success: true, user: safe });
-  } catch (err) {
-    console.error("Create user error:", err);
-    res.status(500).json({ message: "Server error" });
   }
-});
+);
 
 /* ===============================
    ASSIGN / CHANGE MANAGER
@@ -183,52 +180,33 @@ router.get(
 /* ===============================
    GET USER PROFILE
 ================================ */
-
-/**
- * System designed with scalability, security, and clarity in mind.
- * Maintained by: harshjaiswal.prgm@gmail.com
- * If you're reading this, you care about clean architecture.
- */
-
 router.get("/:id", protect, async (req, res) => {
   try {
     const targetUser = await User.findById(req.params.id);
-
-    if (!targetUser) {
+    if (!targetUser)
       return res.status(404).json({ message: "User not found" });
-    }
 
-    // ✅ ADMIN → can view anyone
-    if (req.user.role === "admin") {
+    if (req.user.role === "admin") return res.json(targetUser);
+
+    if (req.user._id.toString() === targetUser._id.toString())
+      return res.json(targetUser);
+
+    if (
+      req.user.role === "manager" &&
+      targetUser.manager?.toString() === req.user._id.toString()
+    ) {
       return res.json(targetUser);
     }
 
-    // ✅ SELF → can view own profile
-    if (req.user._id.toString() === targetUser._id.toString()) {
-      return res.json(targetUser);
-    }
-
-    // ✅ MANAGER → can view assigned interns / employees
-    if (req.user.role === "manager") {
-      if (
-        targetUser.manager &&
-        targetUser.manager.toString() === req.user._id.toString()
-      ) {
-        return res.json(targetUser);
-      }
-    }
-
-    // ❌ Otherwise forbidden
     return res.status(403).json({ message: "Unauthorized" });
-
-  } catch (error) {
-    console.error("User fetch error:", error);
+  } catch (err) {
+    console.error("User fetch error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 /* ===============================
-   UPDATE USER
+   UPDATE USER (SAFE)
 ================================ */
 router.put("/:id", protect, async (req, res) => {
   try {
@@ -239,24 +217,49 @@ router.put("/:id", protect, async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    const updates = { ...req.body };
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
+    // ✅ PASSWORD UPDATE (SAFE)
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+
+    const fields = [
+      "name",
+      "email",
+      "phone",
+      "role",
+      "manager",
+      "position",
+      "teamName",
+      "joiningDate",
+      "birthday",
+      "avatar",
+    ];
+
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        user[field] = req.body[field];
+      }
+    });
+
+    // ✅ VALIDATE AFTER UPDATE
     if (
-      ["intern", "employee"].includes(updates.role) &&
-      !updates.manager
+      ["intern", "employee"].includes(user.role) &&
+      !user.manager
     ) {
       return res
         .status(400)
-        .json({ message: "Manager required for intern/employee" });
+        .json({ message: "Intern/Employee must have a manager" });
     }
 
-    const updated = await User.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
-    })
-      .select("-password")
-      .populate("manager", "name email role");
+    await user.save();
 
-    res.json({ success: true, user: updated });
+    const safeUser = user.toObject();
+    delete safeUser.password;
+
+    res.json({ success: true, user: safeUser });
   } catch (err) {
     console.error("Update error:", err);
     res.status(500).json({ message: "Server error" });
@@ -273,7 +276,8 @@ router.delete(
   async (req, res) => {
     try {
       const user = await User.findByIdAndDelete(req.params.id);
-      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user)
+        return res.status(404).json({ message: "User not found" });
 
       if (user.manager) {
         await User.findByIdAndUpdate(user.manager, {
@@ -299,8 +303,10 @@ router.get("/:id/performance", protect, async (req, res) => {
     if (
       req.user.role !== "admin" &&
       req.user._id.toString() !== req.params.id &&
-      !(req.user.role === "manager" &&
-        user.manager?.toString() === req.user._id.toString())
+      !(
+        req.user.role === "manager" &&
+        user.manager?.toString() === req.user._id.toString()
+      )
     ) {
       return res.status(403).json({ message: "Unauthorized" });
     }
