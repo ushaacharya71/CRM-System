@@ -78,7 +78,7 @@ const Login = () => {
               Glowlogics
             </h1>
             <p className="mt-4 text-sm text-orange-100 max-w-xs leading-relaxed">
-              A modern GMP to manage attendance, performance, revenue & teams
+              A modern Glowlogics Management Portal to manage attendance, performance, revenue & teams
               all in one place.
             </p>
           </motion.div>
