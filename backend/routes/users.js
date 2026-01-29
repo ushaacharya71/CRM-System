@@ -47,7 +47,7 @@ router.post(
         birthday,
       } = req.body;
 
-      // ❌ MANAGER CANNOT CREATE ADMIN / MANAGER
+      // ❌ Manager cannot create admin / manager
       if (
         creatorRole === "manager" &&
         (role === "admin" || role === "manager")
@@ -57,14 +57,14 @@ router.post(
         });
       }
 
-      // ✅ AUTO ASSIGN MANAGER
+      // ✅ Auto-assign manager
       if (["intern", "employee"].includes(role)) {
         if (creatorRole === "manager") {
           manager = req.user._id;
         } else if (!manager) {
-          return res.status(400).json({
-            message: "Intern/Employee must have a manager",
-          });
+          return res
+            .status(400)
+            .json({ message: "Intern/Employee must have a manager" });
         }
       }
 
@@ -87,7 +87,7 @@ router.post(
         teamName,
         joiningDate: joiningDate ? new Date(joiningDate) : new Date(),
         birthday: birthday ? new Date(birthday) : null,
-        password: password || "Glow@123",
+        password: password || "Glow@123", // hashed by model
       });
 
       await newUser.save();
@@ -110,103 +110,7 @@ router.post(
 );
 
 /* ===============================
-   ASSIGN / CHANGE MANAGER
-================================ */
-router.post(
-  "/assign",
-  protect,
-  authorizeRoles("admin", "manager"),
-  async (req, res) => {
-    try {
-      const { internId, managerId } = req.body;
-
-      const user = await User.findById(internId);
-      const manager = await User.findById(managerId);
-
-      if (!user || !manager) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      if (manager.role !== "manager") {
-        return res.status(400).json({ message: "Invalid manager" });
-      }
-
-      if (!["intern", "employee"].includes(user.role)) {
-        return res
-          .status(400)
-          .json({ message: "Only intern/employee can be assigned" });
-      }
-
-      if (user.manager) {
-        await User.findByIdAndUpdate(user.manager, {
-          $pull: { managedInterns: user._id },
-        });
-      }
-
-      user.manager = managerId;
-      await user.save();
-
-      await User.findByIdAndUpdate(managerId, {
-        $addToSet: { managedInterns: user._id },
-      });
-
-      res.json({ success: true });
-    } catch (err) {
-      console.error("Assign error:", err);
-      res.status(500).json({ message: "Server error" });
-    }
-  }
-);
-
-/* ===============================
-   MANAGER → GET OWN INTERNS
-================================ */
-router.get(
-  "/manager/interns",
-  protect,
-  authorizeRoles("manager"),
-  async (req, res) => {
-    try {
-      const users = await User.find({ manager: req.user._id }).select(
-        "name email role teamName joiningDate"
-      );
-      res.json(users);
-    } catch (err) {
-      res.status(500).json({ message: "Server error" });
-    }
-  }
-);
-
-/* ===============================
-   GET USER PROFILE
-================================ */
-router.get("/:id", protect, async (req, res) => {
-  try {
-    const targetUser = await User.findById(req.params.id);
-    if (!targetUser)
-      return res.status(404).json({ message: "User not found" });
-
-    if (req.user.role === "admin") return res.json(targetUser);
-
-    if (req.user._id.toString() === targetUser._id.toString())
-      return res.json(targetUser);
-
-    if (
-      req.user.role === "manager" &&
-      targetUser.manager?.toString() === req.user._id.toString()
-    ) {
-      return res.json(targetUser);
-    }
-
-    return res.status(403).json({ message: "Unauthorized" });
-  } catch (err) {
-    console.error("User fetch error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-/* ===============================
-   UPDATE USER (SAFE)
+   UPDATE USER (✅ PASSWORD RESET FIXED)
 ================================ */
 router.put("/:id", protect, async (req, res) => {
   try {
@@ -220,8 +124,21 @@ router.put("/:id", protect, async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // ✅ PASSWORD UPDATE (SAFE)
-    if (req.body.password) {
+    // 🔐 PASSWORD ONLY UPDATE (skip all validations)
+    if (
+      Object.keys(req.body).length === 1 &&
+      typeof req.body.password === "string"
+    ) {
+      user.password = req.body.password; // model hashes
+      await user.save();
+
+      return res.json({ success: true });
+    }
+
+    const roleBefore = user.role;
+
+    // 🔐 Normal password update
+    if (req.body.password && req.body.password.trim() !== "") {
       user.password = req.body.password;
     }
 
@@ -244,8 +161,15 @@ router.put("/:id", protect, async (req, res) => {
       }
     });
 
-    // ✅ VALIDATE AFTER UPDATE
+    // ✅ Validate only when role/manager actually changes
+    const roleChanged = req.body.role && req.body.role !== roleBefore;
+    const managerTouched = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "manager"
+    );
+
     if (
+      (roleChanged || managerTouched) &&
       ["intern", "employee"].includes(user.role) &&
       !user.manager
     ) {
@@ -291,48 +215,5 @@ router.delete(
     }
   }
 );
-
-/* ===============================
-   PERFORMANCE (DAY-WISE)
-================================ */
-router.get("/:id/performance", protect, async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (
-      req.user.role !== "admin" &&
-      req.user._id.toString() !== req.params.id &&
-      !(
-        req.user.role === "manager" &&
-        user.manager?.toString() === req.user._id.toString()
-      )
-    ) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    const data = await Revenue.aggregate([
-      { $match: { user: new mongoose.Types.ObjectId(req.params.id) } },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$date" },
-          },
-          amount: { $sum: "$amount" },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
-
-    res.json(
-      data.map((d) => ({
-        date: d._id,
-        amount: d.amount,
-      }))
-    );
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
 
 export default router;

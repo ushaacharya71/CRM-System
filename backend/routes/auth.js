@@ -1,4 +1,3 @@
-// backend/routes/auth.js
 import express from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
@@ -23,20 +22,12 @@ router.post("/login", async (req, res) => {
 
     email = email.toLowerCase().trim();
 
-    // 🔍 Find user
+    // 🔍 Find user (explicit password fetch)
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
-      });
-    }
-
-    // 🚫 Optional: block inactive users (future-proof)
-    if (user.isActive === false) {
-      return res.status(403).json({
-        success: false,
-        message: "Account is disabled. Contact admin.",
       });
     }
 

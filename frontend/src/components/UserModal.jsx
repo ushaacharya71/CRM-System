@@ -205,10 +205,16 @@ const UserModal = ({ user, isEdit, onClose, onSave, allUsers = [] }) => {
           />
 
           {/* PASSWORD (ONLY CREATE) */}
+          {/* PASSWORD (CREATE + RESET) */}
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Set Temporary Password"
+              name="password"
+              placeholder={
+                isEdit ? "Reset Password (optional)" : "Set Temporary Password"
+              }
+              value={formData.password}
+              onChange={handleChange}
               className="w-full border rounded-lg p-2 pr-10"
             />
 
@@ -216,7 +222,7 @@ const UserModal = ({ user, isEdit, onClose, onSave, allUsers = [] }) => {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2
-    text-gray-500 hover:text-gray-700"
+      text-gray-500 hover:text-gray-700"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
