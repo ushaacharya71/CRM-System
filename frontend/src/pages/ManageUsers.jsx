@@ -68,21 +68,42 @@ const ManageUsers = () => {
     }
   };
 
-  const handleSave = async (data) => {
-    try {
-      if (isEdit && selectedUser?._id) {
-        await api.put(`/users/${selectedUser._id}`, data);
-      } else {
-        await api.post("/users", data);
-      }
+const handleSave = async (data) => {
+  try {
+    // 🧹 CLEAN PAYLOAD
+    const payload = { ...data };
 
-      setShowModal(false);
-      fetchUsers();
-    } catch (err) {
-      console.error("Error saving user:", err);
-      alert(err.response?.data?.message || "Failed to save user");
+    // ❌ remove empty password
+    if (!payload.password || payload.password.trim() === "") {
+      delete payload.password;
     }
-  };
+
+    // ❌ remove empty manager
+    if (payload.manager === "" || payload.manager === null) {
+      delete payload.manager;
+    }
+
+    // ❌ remove undefined fields
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] === undefined) {
+        delete payload[key];
+      }
+    });
+
+    if (isEdit && selectedUser?._id) {
+      await api.put(`/users/${selectedUser._id}`, payload);
+    } else {
+      await api.post("/users", payload);
+    }
+
+    setShowModal(false);
+    fetchUsers();
+  } catch (err) {
+    console.error("Error saving user:", err);
+    alert(err.response?.data?.message || "Failed to save user");
+  }
+};
+
 
   // ✅ FINAL SAFETY
   const safeUsers = Array.isArray(users) ? users : [];
